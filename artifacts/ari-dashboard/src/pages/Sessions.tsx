@@ -5,17 +5,19 @@ import { Plus, Video, Calendar as CalendarIcon, Clock, Users } from "lucide-reac
 import { format } from "date-fns";
 import * as Dialog from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 export default function Sessions() {
   const { data: sessions, isLoading } = useListSessions();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const { t } = useI18n();
 
   return (
     <div className="space-y-8 pb-12">
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold">Training & Match Sessions</h1>
-          <p className="text-muted-foreground mt-1">Record and analyze team movements using Computer Vision.</p>
+          <h1 className="text-3xl font-display font-bold">{t("sessions_title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("sessions_subtitle")}</p>
         </div>
         
         <CreateSessionDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
@@ -28,8 +30,8 @@ export default function Sessions() {
       ) : sessions?.length === 0 ? (
         <div className="glass-panel rounded-3xl p-12 text-center min-h-[400px] flex flex-col items-center justify-center">
           <Video className="h-16 w-16 text-muted-foreground/30 mb-4" />
-          <h3 className="text-xl font-bold">No sessions recorded</h3>
-          <p className="text-muted-foreground mt-2">Create your first session to start analyzing player movements.</p>
+          <h3 className="text-xl font-bold">{t("sessions_none_title")}</h3>
+          <p className="text-muted-foreground mt-2">{t("sessions_none_desc")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
@@ -49,7 +51,7 @@ export default function Sessions() {
                         session.type === 'training' ? "bg-primary/10 text-primary border-primary/20" :
                         "bg-success/10 text-success border-success/20"
                       )}>
-                        {session.type}
+                        {session.type === 'training' ? t("type_training") : session.type === 'match' ? t("type_match") : t("type_recovery")}
                       </span>
                       <span className={cn("px-2.5 py-0.5 rounded-md text-[10px] uppercase font-bold border", 
                         session.status === 'in-progress' ? "bg-warning/20 text-warning border-warning/30 animate-pulse" : 
@@ -61,14 +63,14 @@ export default function Sessions() {
                     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5"><CalendarIcon className="h-4 w-4" /> {format(new Date(session.date), 'MMM d, yyyy')}</span>
                       <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> {session.duration} mins</span>
-                      <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> {session.playerIds.length} players tracked</span>
+                      <span className="flex items-center gap-1.5"><Users className="h-4 w-4" /> {session.playerIds.length} {t("sessions_players_tracked")}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="sm:text-right">
                   <span className="inline-flex items-center gap-2 text-sm font-bold text-primary group-hover:translate-x-1 transition-transform">
-                    View CV Analysis &rarr;
+                    {t("sessions_view_analysis")} &rarr;
                   </span>
                 </div>
               </div>
@@ -82,6 +84,7 @@ export default function Sessions() {
 
 function CreateSessionDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (o: boolean) => void }) {
   const mutation = useCreateSession();
+  const { t } = useI18n();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,9 +93,9 @@ function CreateSessionDialog({ open, onOpenChange }: { open: boolean, onOpenChan
       data: {
         description: formData.get('description') as string,
         type: formData.get('type') as any,
-        date: new Date().toISOString(), // Mocking date for now
+        date: new Date().toISOString(),
         duration: parseInt(formData.get('duration') as string),
-        playerIds: [1,2,3], // Mocked array for creation
+        playerIds: [1,2,3],
       }
     }, {
       onSuccess: () => onOpenChange(false)
@@ -103,7 +106,7 @@ function CreateSessionDialog({ open, onOpenChange }: { open: boolean, onOpenChan
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Trigger asChild>
         <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 transition-all">
-          <Plus className="h-4 w-4" /> Create Session
+          <Plus className="h-4 w-4" /> {t("sessions_create")}
         </button>
       </Dialog.Trigger>
       
@@ -111,36 +114,36 @@ function CreateSessionDialog({ open, onOpenChange }: { open: boolean, onOpenChan
         <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 animate-in fade-in" />
         <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-md bg-card border border-white/10 shadow-2xl rounded-3xl p-8 z-50 animate-in zoom-in-95 duration-200">
           <Dialog.Title className="text-2xl font-display font-bold mb-6 flex items-center gap-3">
-            <Video className="h-6 w-6 text-primary" /> New Session
+            <Video className="h-6 w-6 text-primary" /> {t("dialog_new_session_title")}
           </Dialog.Title>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">Session Title</label>
-              <input required name="description" placeholder="e.g. Pre-match Tactical" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground" />
+              <label className="text-sm font-medium text-muted-foreground">{t("field_session_title")}</label>
+              <input required name="description" placeholder={t("field_session_title_placeholder")} className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground" />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Type</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_type")}</label>
                 <select name="type" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground appearance-none">
-                  <option value="training">Training</option>
-                  <option value="match">Match</option>
-                  <option value="recovery">Recovery</option>
+                  <option value="training">{t("type_training")}</option>
+                  <option value="match">{t("type_match")}</option>
+                  <option value="recovery">{t("type_recovery")}</option>
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Duration (mins)</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_duration")}</label>
                 <input required type="number" name="duration" defaultValue={90} className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground" />
               </div>
             </div>
 
             <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-white/10">
               <Dialog.Close asChild>
-                <button type="button" className="px-5 py-2.5 rounded-xl bg-secondary text-foreground font-medium hover:bg-white/10 transition-colors">Cancel</button>
+                <button type="button" className="px-5 py-2.5 rounded-xl bg-secondary text-foreground font-medium hover:bg-white/10 transition-colors">{t("btn_cancel")}</button>
               </Dialog.Close>
               <button type="submit" disabled={mutation.isPending} className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all disabled:opacity-50">
-                {mutation.isPending ? "Starting..." : "Start Recording"}
+                {mutation.isPending ? t("btn_starting") : t("btn_start_recording")}
               </button>
             </div>
           </form>

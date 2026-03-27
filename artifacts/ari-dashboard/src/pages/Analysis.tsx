@@ -3,16 +3,16 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChevronLeft, BrainCircuit, Target, AlertTriangle, CheckCircle2, ScanFace, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { useI18n } from "@/lib/i18n";
 
-// Make sure attached assets exist in these paths from the prompt context
 import demoGif1 from "@assets/DEMO_of_Ariadne1_1774578714688.gif";
 import demoGif2 from "@assets/Ariadne_DEMO2_1774578714691.gif";
-import { useState } from "react";
 
 export default function Analysis() {
-  // Hardcoded ID 1 for demo purposes since we navigated without ID
   const { data: analysisData, isLoading } = useGetSessionAnalysis(1);
   const [activeCam, setActiveCam] = useState(0);
+  const { t } = useI18n();
 
   const mockAnalyses = analysisData || [
     { id: 1, movementType: "Sprint Acceleration", correct: false, riskScore: 85, detectedIssues: ["Asymmetric arm swing", "Low knee drive"], confidence: 92 },
@@ -25,10 +25,10 @@ export default function Analysis() {
       <header className="flex items-center justify-between mb-6 shrink-0">
         <div>
           <Link href="/sessions" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium mb-2">
-            <ChevronLeft className="h-4 w-4" /> Back to Sessions
+            <ChevronLeft className="h-4 w-4" /> {t("analysis_back")}
           </Link>
           <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-            <ScanFace className="w-8 h-8 text-primary" /> Live CV Feed
+            <ScanFace className="w-8 h-8 text-primary" /> {t("analysis_live_feed")}
           </h1>
         </div>
         <div className="flex gap-2">
@@ -39,9 +39,7 @@ export default function Analysis() {
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
         
-        {/* Left Side - Video Feed */}
         <div className="lg:col-span-2 glass-panel rounded-3xl overflow-hidden relative border-white/10 flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-          {/* Futuristic UI Overlays */}
           <div className="absolute top-6 left-6 z-10 flex gap-3 items-center">
             <div className="h-3 w-3 rounded-full bg-destructive animate-pulse shadow-[0_0_10px_rgba(255,51,102,0.8)]" />
             <span className="font-display font-bold text-sm tracking-widest text-white drop-shadow-md">REC // AI TRACKING ACTIVE</span>
@@ -50,23 +48,19 @@ export default function Analysis() {
             60 FPS | 4K | NODE-1
           </div>
           
-          {/* Target Brackets */}
           <div className="absolute inset-8 border-2 border-transparent border-t-primary/30 border-l-primary/30 rounded-tl-3xl z-10 pointer-events-none w-16 h-16" />
           <div className="absolute inset-8 border-2 border-transparent border-t-primary/30 border-r-primary/30 rounded-tr-3xl z-10 pointer-events-none w-16 h-16 right-8 left-auto" />
           <div className="absolute inset-8 border-2 border-transparent border-b-primary/30 border-l-primary/30 rounded-bl-3xl z-10 pointer-events-none w-16 h-16 bottom-8 top-auto" />
           <div className="absolute inset-8 border-2 border-transparent border-b-primary/30 border-r-primary/30 rounded-br-3xl z-10 pointer-events-none w-16 h-16 bottom-8 top-auto right-8 left-auto" />
 
-          {/* Scanning Line */}
           <div className="absolute left-0 right-0 h-1 bg-primary/40 shadow-[0_0_15px_rgba(0,212,255,0.8)] z-10 pointer-events-none animate-scanline" />
 
-          {/* Video Container */}
           <div className="flex-1 bg-black relative flex items-center justify-center">
             <img 
               src={activeCam === 0 ? demoGif1 : demoGif2} 
               alt="Live Computer Vision Tracking" 
               className="w-full h-full object-cover opacity-80"
             />
-            {/* Grid overlay */}
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4xKSIvPjwvc3ZnPg==')] pointer-events-none" />
           </div>
           
@@ -86,13 +80,12 @@ export default function Analysis() {
           </div>
         </div>
 
-        {/* Right Side - Analysis Stream */}
         <div className="glass-panel rounded-3xl border-white/10 flex flex-col h-full overflow-hidden">
           <div className="p-6 border-b border-white/10 bg-secondary/30">
             <h3 className="text-xl font-display font-bold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-accent" /> Event Stream
+              <Activity className="w-5 h-5 text-accent" /> {t("analysis_event_stream")}
             </h3>
-            <p className="text-sm text-muted-foreground mt-1">Real-time biomechanical analysis</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("analysis_biomechanical")}</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -129,7 +122,7 @@ export default function Analysis() {
                   {!item.correct && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Injury Risk</span>
+                        <span className="text-muted-foreground">{t("analysis_injury_risk")}</span>
                         <span className="font-bold text-destructive">{item.riskScore}/100</span>
                       </div>
                       <div className="w-full bg-background rounded-full h-1.5 mb-3 overflow-hidden">
@@ -137,7 +130,7 @@ export default function Analysis() {
                       </div>
                       
                       <div className="space-y-1">
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Detected Issues:</p>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t("analysis_detected_issues")}</p>
                         <ul className="text-sm space-y-1">
                           {item.detectedIssues.map((issue, i) => (
                             <li key={i} className="flex items-start gap-1.5 text-foreground/80">

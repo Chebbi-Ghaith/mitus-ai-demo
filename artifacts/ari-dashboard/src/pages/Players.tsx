@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useListPlayers, useCreatePlayer } from "@workspace/api-client-react";
-import { Search, Plus, Filter, Activity, HeartPulse } from "lucide-react";
+import { Search, Plus, Filter, Activity, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatRiskColor, formatStatusColor, cn } from "@/lib/utils";
 import * as Dialog from "@radix-ui/react-dialog";
+import { useI18n } from "@/lib/i18n";
 
 export default function Players() {
   const { data: players, isLoading } = useListPlayers();
   const [search, setSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const { t } = useI18n();
 
   const filteredPlayers = players?.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -20,8 +22,8 @@ export default function Players() {
     <div className="space-y-8 pb-12">
       <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold">Squad Roster</h1>
-          <p className="text-muted-foreground mt-1">Manage players, view medical records and analyze performance.</p>
+          <h1 className="text-3xl font-display font-bold">{t("players_title")}</h1>
+          <p className="text-muted-foreground mt-1">{t("players_subtitle")}</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -29,7 +31,7 @@ export default function Players() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input 
               type="text" 
-              placeholder="Search players..."
+              placeholder={t("players_search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10 pr-4 py-2.5 rounded-xl bg-secondary border border-white/10 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all w-full sm:w-64 placeholder:text-muted-foreground"
@@ -52,8 +54,8 @@ export default function Players() {
       ) : filteredPlayers.length === 0 ? (
         <div className="glass-panel rounded-3xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
           <Users className="h-16 w-16 text-muted-foreground/30 mb-4" />
-          <h3 className="text-xl font-bold">No players found</h3>
-          <p className="text-muted-foreground mt-2 max-w-md mx-auto">Try adjusting your search filters or add a new player to the squad to start tracking performance.</p>
+          <h3 className="text-xl font-bold">{t("players_none_title")}</h3>
+          <p className="text-muted-foreground mt-2 max-w-md mx-auto">{t("players_none_desc")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -67,7 +69,6 @@ export default function Players() {
               <Link href={`/players/${player.id}`} className="block h-full">
                 <div className="glass-panel p-6 rounded-3xl h-full hover:border-primary/40 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 group cursor-pointer relative overflow-hidden">
                   
-                  {/* Status indicator line */}
                   <div className={cn(
                     "absolute top-0 left-0 w-full h-1",
                     player.status === 'injured' ? "bg-destructive" :
@@ -94,13 +95,13 @@ export default function Players() {
 
                   <div className="mt-6 pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">Injury Risk</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">{t("label_injury_risk")}</p>
                       <span className={cn("px-2.5 py-0.5 rounded-md text-xs font-semibold border inline-block", formatRiskColor(player.injuryRisk))}>
                         {player.injuryRisk}
                       </span>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">Fatigue</p>
+                      <p className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">{t("label_fatigue")}</p>
                       <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
                         <Activity className="h-3.5 w-3.5 text-primary" />
                         {player.wearableData?.fatigue || 0}%
@@ -117,9 +118,9 @@ export default function Players() {
   );
 }
 
-// Add Player Dialog Component
 function CreatePlayerDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (o: boolean) => void }) {
   const mutation = useCreatePlayer();
+  const { t } = useI18n();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,47 +146,47 @@ function CreatePlayerDialog({ open, onOpenChange }: { open: boolean, onOpenChang
       <Dialog.Trigger asChild>
         <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5 transition-all">
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Add Player</span>
+          <span className="hidden sm:inline">{t("players_add")}</span>
         </button>
       </Dialog.Trigger>
       
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 animate-in fade-in" />
         <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-lg bg-card border border-white/10 shadow-2xl rounded-3xl p-8 z-50 animate-in zoom-in-95 duration-200">
-          <Dialog.Title className="text-2xl font-display font-bold mb-6">Add New Player</Dialog.Title>
+          <Dialog.Title className="text-2xl font-display font-bold mb-6">{t("dialog_add_player_title")}</Dialog.Title>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Full Name</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_full_name")}</label>
                 <input required name="name" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Jersey Number</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_jersey_number")}</label>
                 <input required type="number" name="number" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Position</label>
-                <input required name="position" placeholder="e.g. Forward" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
+                <label className="text-sm font-medium text-muted-foreground">{t("field_position")}</label>
+                <input required name="position" placeholder={t("field_position_placeholder")} className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Age</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_age")}</label>
                 <input required type="number" name="age" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Nationality</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_nationality")}</label>
                 <input required name="nationality" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Height (cm)</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_height")}</label>
                 <input required type="number" step="0.1" name="height" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Weight (kg)</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_weight")}</label>
                 <input required type="number" step="0.1" name="weight" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-muted-foreground">Muscle Mass (%)</label>
+                <label className="text-sm font-medium text-muted-foreground">{t("field_muscle_mass")}</label>
                 <input required type="number" step="0.1" name="muscleMass" className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" />
               </div>
             </div>
@@ -193,7 +194,7 @@ function CreatePlayerDialog({ open, onOpenChange }: { open: boolean, onOpenChang
             <div className="mt-8 flex justify-end gap-3 pt-6 border-t border-white/10">
               <Dialog.Close asChild>
                 <button type="button" className="px-5 py-2.5 rounded-xl bg-secondary text-foreground font-medium hover:bg-white/10 transition-colors">
-                  Cancel
+                  {t("btn_cancel")}
                 </button>
               </Dialog.Close>
               <button 
@@ -201,7 +202,7 @@ function CreatePlayerDialog({ open, onOpenChange }: { open: boolean, onOpenChang
                 disabled={mutation.isPending}
                 className="px-6 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-all disabled:opacity-50"
               >
-                {mutation.isPending ? "Creating..." : "Save Player"}
+                {mutation.isPending ? t("btn_creating") : t("btn_save_player")}
               </button>
             </div>
           </form>

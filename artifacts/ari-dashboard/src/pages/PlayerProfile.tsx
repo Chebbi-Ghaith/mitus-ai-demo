@@ -6,10 +6,12 @@ import { Activity, ShieldAlert, Pill, FileText, ChevronLeft, Calendar, Dumbbell,
 import { Link } from "wouter";
 import { formatRiskColor, formatStatusColor, cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { useI18n } from "@/lib/i18n";
 
 export default function PlayerProfile() {
   const [, params] = useRoute("/players/:id");
   const id = parseInt(params?.id || "0");
+  const { t } = useI18n();
 
   const { data: player, isLoading: loadingPlayer } = useGetPlayer(id, { query: { enabled: !!id } });
   const { data: medical, isLoading: loadingMedical } = useGetPlayerMedical(id, { query: { enabled: !!id } });
@@ -19,19 +21,17 @@ export default function PlayerProfile() {
     return <div className="h-full flex items-center justify-center"><div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   }
 
-  // Mock heart rate data for visual flair
   const hrData = Array.from({length: 20}, (_, i) => ({
     time: `${i}m`,
-    hr: 110 + Math.random() * 60 + (i > 10 && i < 15 ? 40 : 0) // Spike in the middle
+    hr: 110 + Math.random() * 60 + (i > 10 && i < 15 ? 40 : 0)
   }));
 
   return (
     <div className="space-y-8 pb-12 max-w-6xl mx-auto">
       <Link href="/players" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">
-        <ChevronLeft className="h-4 w-4" /> Back to Squad
+        <ChevronLeft className="h-4 w-4" /> {t("profile_back")}
       </Link>
 
-      {/* Profile Header */}
       <div className="glass-panel p-8 rounded-3xl relative overflow-hidden">
         <div className="absolute right-0 top-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
         
@@ -54,13 +54,13 @@ export default function PlayerProfile() {
                 Risk: {player.injuryRisk}
               </span>
             </div>
-            <p className="text-lg text-muted-foreground mb-6">{player.position} • {player.nationality} • {player.age} yrs</p>
+            <p className="text-lg text-muted-foreground mb-6">{player.position} • {player.nationality} • {player.age} {t("profile_yrs")}</p>
             
             <div className="flex flex-wrap gap-8">
-              <Stat label="Height" value={`${player.height}cm`} />
-              <Stat label="Weight" value={`${player.weight}kg`} />
-              <Stat label="Muscle Mass" value={`${player.muscleMass}%`} />
-              <Stat label="Max HR" value={`${player.wearableData.heartRateMax}bpm`} />
+              <Stat label={t("profile_height")} value={`${player.height}cm`} />
+              <Stat label={t("profile_weight")} value={`${player.weight}kg`} />
+              <Stat label={t("profile_muscle_mass")} value={`${player.muscleMass}%`} />
+              <Stat label={t("profile_max_hr")} value={`${player.wearableData.heartRateMax}bpm`} />
             </div>
           </div>
         </div>
@@ -68,13 +68,17 @@ export default function PlayerProfile() {
 
       <Tabs.Root defaultValue="wearables" className="w-full">
         <Tabs.List className="flex border-b border-white/10 mb-8 overflow-x-auto hide-scrollbar">
-          {["wearables", "medical", "protocols"].map(tab => (
+          {[
+            { value: "wearables", label: t("tab_wearables") },
+            { value: "medical", label: t("tab_medical") },
+            { value: "protocols", label: t("tab_protocols") },
+          ].map(tab => (
             <Tabs.Trigger 
-              key={tab}
-              value={tab}
+              key={tab.value}
+              value={tab.value}
               className="px-6 py-4 text-sm font-semibold text-muted-foreground hover:text-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors capitalize whitespace-nowrap"
             >
-              {tab}
+              {tab.label}
             </Tabs.Trigger>
           ))}
         </Tabs.List>
@@ -84,15 +88,15 @@ export default function PlayerProfile() {
           {/* WEARABLES TAB */}
           <Tabs.Content value="wearables" className="space-y-6 outline-none">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <MetricBox label="Current Fatigue" value={`${player.wearableData.fatigue}%`} icon={Activity} color="text-warning" />
-              <MetricBox label="Distance Today" value={`${player.wearableData.distance}km`} icon={Activity} color="text-primary" />
-              <MetricBox label="Top Speed" value={`${player.wearableData.speed}km/h`} icon={Activity} color="text-success" />
+              <MetricBox label={t("metric_current_fatigue")} value={`${player.wearableData.fatigue}%`} icon={Activity} color="text-warning" />
+              <MetricBox label={t("metric_distance_today")} value={`${player.wearableData.distance}km`} icon={Activity} color="text-primary" />
+              <MetricBox label={t("metric_top_speed")} value={`${player.wearableData.speed}km/h`} icon={Activity} color="text-success" />
             </div>
 
             <div className="glass-panel p-6 rounded-3xl h-[400px]">
               <div className="mb-6 flex justify-between items-center">
-                <h3 className="text-lg font-bold">Heart Rate Zone (Last Session)</h3>
-                <span className="text-xs text-muted-foreground bg-white/5 px-3 py-1 rounded-full border border-white/10">Live CV synced</span>
+                <h3 className="text-lg font-bold">{t("chart_hr_title")}</h3>
+                <span className="text-xs text-muted-foreground bg-white/5 px-3 py-1 rounded-full border border-white/10">{t("chart_hr_synced")}</span>
               </div>
               <ResponsiveContainer width="100%" height="80%">
                 <AreaChart data={hrData}>
@@ -118,46 +122,46 @@ export default function PlayerProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div className="glass-panel p-6 rounded-3xl">
-                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><ShieldAlert className="w-5 h-5 text-primary" /> Overview</h3>
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><ShieldAlert className="w-5 h-5 text-primary" /> {t("medical_overview")}</h3>
                     <div className="space-y-4">
                       <div className="flex justify-between border-b border-white/5 pb-3">
-                        <span className="text-muted-foreground">Clearance Status</span>
+                        <span className="text-muted-foreground">{t("medical_clearance")}</span>
                         <span className={cn("font-bold", medical.clearanceStatus === 'cleared' ? 'text-success' : 'text-destructive')}>{medical.clearanceStatus.toUpperCase()}</span>
                       </div>
                       <div className="flex justify-between border-b border-white/5 pb-3">
-                        <span className="text-muted-foreground">Blood Type</span>
+                        <span className="text-muted-foreground">{t("medical_blood_type")}</span>
                         <span className="font-bold text-foreground">{medical.bloodType}</span>
                       </div>
                       <div className="flex justify-between pb-3">
-                        <span className="text-muted-foreground">Last Exam</span>
+                        <span className="text-muted-foreground">{t("medical_last_exam")}</span>
                         <span className="font-bold text-foreground">{new Date(medical.lastExamDate).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="glass-panel p-6 rounded-3xl">
-                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Pill className="w-5 h-5 text-warning" /> Medications & Allergies</h3>
+                    <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><Pill className="w-5 h-5 text-warning" /> {t("medical_medications")}</h3>
                     <div className="mb-4">
-                      <p className="text-sm text-muted-foreground mb-2">Current Medications</p>
+                      <p className="text-sm text-muted-foreground mb-2">{t("medical_current_meds")}</p>
                       <div className="flex flex-wrap gap-2">
                         {medical.medications.length > 0 ? medical.medications.map(m => (
                           <span key={m} className="px-3 py-1 bg-secondary rounded-full text-xs border border-white/10">{m}</span>
-                        )) : <span className="text-sm text-muted-foreground">None recorded</span>}
+                        )) : <span className="text-sm text-muted-foreground">{t("medical_none_meds")}</span>}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Allergies</p>
+                      <p className="text-sm text-muted-foreground mb-2">{t("medical_allergies")}</p>
                       <div className="flex flex-wrap gap-2">
                         {medical.allergies.length > 0 ? medical.allergies.map(a => (
                           <span key={a} className="px-3 py-1 bg-destructive/10 text-destructive rounded-full text-xs border border-destructive/20">{a}</span>
-                        )) : <span className="text-sm text-muted-foreground">No known allergies</span>}
+                        )) : <span className="text-sm text-muted-foreground">{t("medical_no_allergies")}</span>}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="glass-panel p-6 rounded-3xl">
-                  <h3 className="text-lg font-bold mb-6 flex items-center gap-2"><FileText className="w-5 h-5 text-accent" /> Injury History</h3>
+                  <h3 className="text-lg font-bold mb-6 flex items-center gap-2"><FileText className="w-5 h-5 text-accent" /> {t("medical_injury_history")}</h3>
                   <div className="space-y-4 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
                     {medical.injuries.length > 0 ? medical.injuries.map((injury, i) => (
                       <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
@@ -171,11 +175,11 @@ export default function PlayerProfile() {
                           </div>
                           <p className="text-xs text-muted-foreground mb-2">{injury.notes}</p>
                           <span className={cn("text-[10px] uppercase font-bold tracking-wider", injury.recovered ? "text-success" : "text-destructive")}>
-                            {injury.recovered ? "Recovered" : "Active Issue"}
+                            {injury.recovered ? t("status_recovered") : t("status_active_issue")}
                           </span>
                         </div>
                       </div>
-                    )) : <p className="text-muted-foreground text-sm">No major injuries recorded.</p>}
+                    )) : <p className="text-muted-foreground text-sm">{t("medical_no_injuries")}</p>}
                   </div>
                 </div>
               </div>
@@ -187,9 +191,9 @@ export default function PlayerProfile() {
              {loadingProtocols ? <div className="h-40 animate-pulse bg-white/5 rounded-2xl" /> : (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-display font-bold">AI Prevention Protocols</h3>
+                  <h3 className="text-xl font-display font-bold">{t("protocols_title")}</h3>
                   <span className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-semibold flex items-center gap-1.5">
-                    <BrainCircuit className="w-3.5 h-3.5" /> Generated from CV Analysis
+                    <BrainCircuit className="w-3.5 h-3.5" /> {t("protocols_badge")}
                   </span>
                 </div>
                 
@@ -204,7 +208,7 @@ export default function PlayerProfile() {
                         <span className={cn("px-2.5 py-1 rounded-md text-[10px] uppercase font-bold", 
                           protocol.priority === 'critical' || protocol.priority === 'high' ? "bg-destructive/10 text-destructive border border-destructive/20" : 
                           "bg-secondary text-muted-foreground border border-white/5"
-                        )}>{protocol.priority} Priority</span>
+                        )}>{protocol.priority} {t("protocols_priority")}</span>
                       </div>
                       
                       <div className="flex items-center gap-4 text-xs text-muted-foreground mb-6 pb-4 border-b border-white/5">
@@ -223,12 +227,12 @@ export default function PlayerProfile() {
                         ))}
                       </div>
                       <button className="w-full mt-6 py-2.5 rounded-xl bg-white/5 hover:bg-primary hover:text-primary-foreground text-sm font-semibold transition-all flex items-center justify-center gap-2">
-                        <Play className="w-4 h-4" /> Start Routine
+                        <Play className="w-4 h-4" /> {t("protocols_start")}
                       </button>
                     </div>
                   )) : (
                     <div className="col-span-full glass-panel p-12 text-center rounded-3xl">
-                      <p className="text-muted-foreground">No protocols generated yet. Complete a CV analysis session to generate custom injury prevention routines.</p>
+                      <p className="text-muted-foreground">{t("protocols_none")}</p>
                     </div>
                   )}
                 </div>

@@ -3,8 +3,8 @@ import { Activity, AlertTriangle, Users, HeartPulse, TrendingUp } from "lucide-r
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useI18n } from "@/lib/i18n";
 
-// Mock data for the chart since the backend doesn't provide historical trend yet
 const mockFatigueData = [
   { day: 'Mon', fatigue: 45 },
   { day: 'Tue', fatigue: 52 },
@@ -18,6 +18,7 @@ const mockFatigueData = [
 export default function Dashboard() {
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: players, isLoading: playersLoading } = useListPlayers();
+  const { t } = useI18n();
 
   const highRiskPlayers = players?.filter(p => p.injuryRisk === 'high') || [];
 
@@ -35,14 +36,13 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 pb-12">
       <header>
-        <h1 className="text-3xl font-display font-bold">Squad Overview</h1>
-        <p className="text-muted-foreground mt-1">AI performance and risk analytics for the current week.</p>
+        <h1 className="text-3xl font-display font-bold">{t("dashboard_title")}</h1>
+        <p className="text-muted-foreground mt-1">{t("dashboard_subtitle")}</p>
       </header>
 
-      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard 
-          title="Active Squad" 
+          title={t("metric_active_squad")}
           value={stats?.activePlayers || 0} 
           total={stats?.totalPlayers || 0}
           icon={Users} 
@@ -50,26 +50,26 @@ export default function Dashboard() {
           delay={0.1}
         />
         <MetricCard 
-          title="High Injury Risk" 
+          title={t("metric_high_risk")}
           value={stats?.highRiskPlayers || 0} 
-          subtitle="Requires attention"
+          subtitle={t("metric_requires_attention")}
           icon={AlertTriangle} 
           color="destructive"
           delay={0.2}
           isAlert={stats?.highRiskPlayers ? stats.highRiskPlayers > 0 : false}
         />
         <MetricCard 
-          title="Avg Team Fatigue" 
+          title={t("metric_avg_fatigue")}
           value={`${Math.round(stats?.teamFatigue || 0)}%`} 
-          subtitle="+4% from last week"
+          subtitle={t("metric_fatigue_change")}
           icon={Activity} 
           color="warning"
           delay={0.3}
         />
         <MetricCard 
-          title="Avg Heart Rate" 
+          title={t("metric_avg_hr")}
           value={`${Math.round(stats?.teamAvgHeartRate || 0)} bpm`} 
-          subtitle="During active sessions"
+          subtitle={t("metric_hr_subtitle")}
           icon={HeartPulse} 
           color="accent"
           delay={0.4}
@@ -77,7 +77,6 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Chart Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -86,8 +85,8 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Team Fatigue Trend</h3>
-              <p className="text-sm text-muted-foreground">Aggregate wearable data across all sessions</p>
+              <h3 className="text-lg font-semibold text-foreground">{t("chart_fatigue_title")}</h3>
+              <p className="text-sm text-muted-foreground">{t("chart_fatigue_subtitle")}</p>
             </div>
             <div className="h-10 w-10 rounded-full bg-secondary border border-white/5 flex items-center justify-center">
               <TrendingUp className="h-5 w-5 text-primary" />
@@ -109,14 +108,13 @@ export default function Dashboard() {
                   stroke="hsl(var(--primary))" 
                   strokeWidth={3}
                   dot={{ r: 4, fill: 'hsl(var(--card))', strokeWidth: 2 }}
-                  activeDot={{ r: 6, fill: 'hsl(var(--primary))', strokeWidth: 0, className: "drop-shadow-[0_0_8px_rgba(0,212,255,0.8)]" }}
+                  activeDot={{ r: 6, fill: 'hsl(var(--primary))', strokeWidth: 0 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
 
-        {/* Attention Needed */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -126,7 +124,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Critical Action
+              {t("alert_critical_action")}
             </h3>
             <span className="px-2.5 py-1 rounded-full bg-destructive/20 text-destructive text-xs font-bold border border-destructive/30">
               {highRiskPlayers.length}
@@ -142,14 +140,14 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate group-hover:text-destructive transition-colors">{player.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{player.position} • Fatigue: {player.wearableData?.fatigue}%</p>
+                    <p className="text-xs text-muted-foreground truncate">{player.position} • {t("label_fatigue")}: {player.wearableData?.fatigue}%</p>
                   </div>
                 </div>
               ))
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
                 <HeartPulse className="h-10 w-10 text-success/50 mb-3" />
-                <p className="text-sm">No players currently at high risk. Squad is in optimal condition.</p>
+                <p className="text-sm">{t("alert_no_risk")}</p>
               </div>
             )}
           </div>

@@ -2,26 +2,16 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { I18nProvider } from "@/lib/i18n";
 import NotFound from "@/pages/not-found";
-
-// Components
 import { AppLayout } from "@/components/layout/AppLayout";
-
-// Pages
 import Dashboard from "@/pages/Dashboard";
 import Players from "@/pages/Players";
 import PlayerProfile from "@/pages/PlayerProfile";
 import Sessions from "@/pages/Sessions";
 import Analysis from "@/pages/Analysis";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function Router() {
   return (
@@ -42,10 +32,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
+        <I18nProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </I18nProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
