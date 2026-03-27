@@ -19,12 +19,14 @@ AI-powered football (soccer) player performance analytics platform for coaches. 
 
 ## Authentication
 
-- **Provider**: Replit Auth (OpenID Connect with PKCE) — `openid-client` v6
-- **Session storage**: PostgreSQL `auth_sessions` table (custom sid, JSON payload, expire)
-- **Middleware**: `artifacts/api-server/src/middlewares/authMiddleware.ts` runs on every request
-- **Routes**: `GET /api/login` → OIDC redirect, `GET /api/callback` → session create, `GET /api/logout` → OIDC end-session
-- **Frontend**: `lib/replit-auth-web` package → `useAuth()` hook → `@/lib/auth.tsx` adapter
-- **Login page**: `artifacts/ari-dashboard/src/pages/Login.tsx` — simple "Log in" button, no custom forms
+- **Provider**: Custom email/password + Google OAuth
+- **Session storage**: `express-session` (in-memory, server-side cookies)
+- **Password hashing**: `bcrypt` (10 rounds)
+- **Routes**: `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/google`, `GET /api/auth/me`, `POST /api/auth/logout`
+- **Google OAuth**: Frontend uses `@react-oauth/google`. Backend verifies JWT via Google tokeninfo API. Requires `VITE_GOOGLE_CLIENT_ID` env var.
+- **Frontend auth context**: `artifacts/ari-dashboard/src/lib/auth.tsx` — `AuthProvider` with `login`, `register`, `loginWithGoogle`, `logout`
+- **Login page**: `artifacts/ari-dashboard/src/pages/Login.tsx` — full split-panel Sign In + Sign Up + Google OAuth forms
+- **Demo accounts**: coach@ari.ai, mancini@ari.ai, garcia@ari.ai (password: coach123)
 
 ## Structure
 
