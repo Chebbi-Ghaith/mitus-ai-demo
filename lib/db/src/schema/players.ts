@@ -63,3 +63,30 @@ export const injuryHistoryTable = pgTable("injury_history", {
 });
 
 export type InjuryHistory = typeof injuryHistoryTable.$inferSelect;
+
+// Wearable & data-source integrations per player
+export const playerIntegrationsTable = pgTable("player_integrations", {
+  id: serial("id").primaryKey(),
+  playerId: integer("player_id").notNull().references(() => playersTable.id),
+  provider: text("provider").notNull(), // 'whoop' | 'apple_health' | 'oura' | 'garmin' | 'medical_records'
+  status: text("status").notNull().default("disconnected"), // 'connected' | 'disconnected' | 'pending'
+  lastSync: timestamp("last_sync"),
+  connectedAt: timestamp("connected_at"),
+  meta: text("meta").default("{}"), // JSON string for extra metadata
+});
+
+export type PlayerIntegration = typeof playerIntegrationsTable.$inferSelect;
+
+// Uploaded documents / files for a player
+export const playerDocumentsTable = pgTable("player_documents", {
+  id: serial("id").primaryKey(),
+  playerId: integer("player_id").notNull().references(() => playersTable.id),
+  filename: text("filename").notNull(),
+  originalName: text("original_name").notNull(),
+  fileType: text("file_type").notNull(), // 'csv' | 'json' | 'pdf'
+  category: text("category").notNull().default("wearable"), // 'wearable' | 'medical' | 'other'
+  status: text("status").notNull().default("pending"), // 'pending' | 'parsed' | 'error'
+  parsedRows: integer("parsed_rows").default(0),
+  notes: text("notes").default(""),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+});

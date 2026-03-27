@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import { formatRiskColor, formatStatusColor, cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { useI18n } from "@/lib/i18n";
+import { DataSourcesModal } from "@/components/DataSourcesModal";
 
 export default function PlayerProfile() {
   const [, params] = useRoute("/players/:id");
@@ -54,14 +55,16 @@ export default function PlayerProfile() {
                 Risk: {player.injuryRisk}
               </span>
             </div>
-            <p className="text-lg text-muted-foreground mb-6">{player.position} • {player.nationality} • {player.age} {t("profile_yrs")}</p>
+            <p className="text-lg text-muted-foreground mb-4">{player.position} • {player.nationality} • {player.age} {t("profile_yrs")}</p>
             
-            <div className="flex flex-wrap gap-8">
+            <div className="flex flex-wrap gap-8 mb-6">
               <Stat label={t("profile_height")} value={`${player.height}cm`} />
               <Stat label={t("profile_weight")} value={`${player.weight}kg`} />
               <Stat label={t("profile_muscle_mass")} value={`${player.muscleMass}%`} />
               <Stat label={t("profile_max_hr")} value={`${player.wearableData.heartRateMax}bpm`} />
             </div>
+
+            <DataSourcesModal playerId={id} playerName={player.name} />
           </div>
         </div>
       </div>
