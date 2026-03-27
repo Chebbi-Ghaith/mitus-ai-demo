@@ -9,7 +9,7 @@ const DEMO_USERS = [
   { name: "Coach García", email: "garcia@ari.ai", role: "Analytics Coach" },
 ];
 
-const PASSWORD = "coach123";
+const PASSWORD = process.env.DEMO_SEED_PASSWORD ?? "coach123";
 
 async function seedDemoUsers() {
   const hash = await bcrypt.hash(PASSWORD, 12);
