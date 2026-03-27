@@ -1,0 +1,73 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --font-sans: var(--app-font-sans);
+  --font-display: var(--app-font-display);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  --background: 220 40% 6%;
+  --foreground: 210 40% 96%;
+  --border: 215 28% 16%;
+  --card: 220 36% 8%;
+  --card-foreground: 210 40% 96%;
+  --primary: 195 100% 50%;
+  --primary-foreground: 220 40% 6%;
+  --muted: 215 30% 12%;
+  --muted-foreground: 215 20% 50%;
+  --accent: 262 80% 62%;
+  --radius: 0.75rem;
+
+  --app-font-sans: 'Inter', system-ui, sans-serif;
+  --app-font-display: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  * { @apply border-border; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { @apply bg-background text-foreground font-sans antialiased; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.float { animation: float 6s ease-in-out infinite; }
+.pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.float-delay { animation: float 6s ease-in-out infinite 2s; }
+
+.gradient-text {
+  background: linear-gradient(135deg, hsl(195 100% 60%), hsl(262 80% 72%));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-glow {
+  background: radial-gradient(ellipse 80% 50% at 50% 0%, hsl(195 100% 50% / 0.15), transparent 60%);
+}
+
+.card-glow:hover {
+  box-shadow: 0 0 40px hsl(195 100% 50% / 0.12), 0 8px 32px rgba(0,0,0,0.4);
+}
