@@ -7,7 +7,7 @@ import {
   Video, 
   Settings,
   BrainCircuit,
-  ChevronDown
+  Globe
 } from "lucide-react";
 import { useI18n, LANGUAGES, type Locale } from "@/lib/i18n";
 import { useState, useRef, useEffect } from "react";
@@ -15,8 +15,8 @@ import { useState, useRef, useEffect } from "react";
 export function Sidebar() {
   const [location] = useLocation();
   const { t, locale, setLocale } = useI18n();
-  const [langOpen, setLangOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
     { href: "/", label: t("nav_dashboard"), icon: LayoutDashboard },
@@ -29,8 +29,8 @@ export function Sidebar() {
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setLangOpen(false);
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -79,54 +79,57 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Language Switcher */}
-      <div className="px-4 pb-3" ref={dropdownRef}>
-        <div className="relative">
-          <button
-            onClick={() => setLangOpen(v => !v)}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-secondary/60 border border-white/8 hover:border-primary/30 hover:bg-white/5 transition-all group"
-          >
-            <span className="text-xl leading-none">{currentLang.flag}</span>
-            <span className="flex-1 text-left text-sm font-medium text-foreground">{currentLang.label}</span>
-            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-200", langOpen && "rotate-180")} />
-          </button>
-
-          {langOpen && (
-            <div className="absolute bottom-full left-0 right-0 mb-2 bg-card border border-white/10 rounded-2xl overflow-hidden shadow-2xl shadow-black/50 z-50">
-              {LANGUAGES.map(lang => (
-                <button
-                  key={lang.code}
-                  onClick={() => { setLocale(lang.code as Locale); setLangOpen(false); }}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-white/5",
-                    locale === lang.code ? "text-primary bg-primary/10" : "text-foreground"
-                  )}
-                >
-                  <span className="text-xl leading-none">{lang.flag}</span>
-                  <span className="font-medium">{lang.label}</span>
-                  {locale === lang.code && (
-                    <span className="ml-auto text-primary text-xs font-bold">✓</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="px-4 pb-6">
-        <div className="glass-panel p-4 rounded-2xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="p-6" ref={settingsRef}>
+        <div className="glass-panel p-4 rounded-2xl relative overflow-hidden">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-secondary border border-white/10 flex items-center justify-center shrink-0">
               <span className="font-display font-bold text-sm text-primary">MC</span>
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground">Coach Carter</p>
               <p className="text-xs text-muted-foreground">{t("role_head_coach")}</p>
             </div>
-            <Settings className="h-4 w-4 ml-auto text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
+            <button
+              onClick={() => setSettingsOpen(v => !v)}
+              className={cn(
+                "p-1.5 rounded-lg transition-colors",
+                settingsOpen ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/10"
+              )}
+            >
+              <Settings className="h-4 w-4" />
+            </button>
           </div>
+
+          {/* Settings popover */}
+          {settingsOpen && (
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="flex items-center gap-2 mb-3">
+                <Globe className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Language</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    onClick={() => { setLocale(lang.code as Locale); setSettingsOpen(false); }}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all",
+                      locale === lang.code
+                        ? "bg-primary/15 text-primary border border-primary/30 font-semibold"
+                        : "text-muted-foreground hover:bg-white/5 hover:text-foreground border border-transparent"
+                    )}
+                  >
+                    <span className="text-base leading-none">{lang.flag}</span>
+                    <span className="truncate">{lang.label}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground/60">
+                <span className="text-base leading-none">{currentLang.flag}</span>
+                <span>{currentLang.label}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </aside>
