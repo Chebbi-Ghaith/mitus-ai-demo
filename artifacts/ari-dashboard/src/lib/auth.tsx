@@ -1,61 +1,94 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 
-interface AuthUser {
+const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+
+export interface AuthUser {
+  id: number;
   name: string;
   role: string;
   email: string;
+  avatarUrl?: string | null;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-}
-
-const DEMO_COACHES: Record<string, AuthUser & { password: string }> = {
-  "coach@ari.ai": { email: "coach@ari.ai", name: "Coach Carter", role: "Head Coach", password: "coach123" },
-  "mancini@ari.ai": { email: "mancini@ari.ai", name: "Coach Mancini", role: "Fitness Coach", password: "coach123" },
-  "garcia@ari.ai": { email: "garcia@ari.ai", name: "Coach García", role: "Analytics Coach", password: "coach123" },
-};
-
-const STORAGE_KEY = "ari_auth_user";
-
-function loadUser(): AuthUser | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  register: (name: string, email: string, password: string, role: string) => Promise<{ ok: boolean; error?: string }>;
+  loginWithGoogle: (credential: string) => Promise<{ ok: boolean; error?: string }>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
-  login: async () => false,
-  logout: () => {},
+  isLoading: true,
+  login: async () => ({ ok: false }),
+  register: async () => ({ ok: false }),
+  loginWithGoogle: async () => ({ ok: false }),
+  logout: async () => {},
 });
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(loadUser);
+async function apiFetch(path: string, options?: RequestInit) {
+  return fetch(`${BASE}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    ...options,
+  });
+}
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    await new Promise(r => setTimeout(r, 900)); // simulate network
-    const coach = DEMO_COACHES[email.toLowerCase()];
-    if (coach && coach.password === password) {
-      const authUser: AuthUser = { name: coach.name, role: coach.role, email: coach.email };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
-      setUser(authUser);
-      return true;
-    }
-    return false;
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Restore session on mount
+  useEffect(() => {
+    apiFetch("/api/auth/me")
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setUser(data); })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+  const login = useCallback(async (email: string, password: string) => {
+    const res = await apiFetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (res.ok) { setUser(data); return { ok: true }; }
+    return { ok: false, error: data.error ?? "Login failed." };
+  }, []);
+
+  const register = useCallback(async (name: string, email: string, password: string, role: string) => {
+    const res = await apiFetch("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ name, email, password, role }),
+    });
+    const data = await res.json();
+    if (res.ok) { setUser(data); return { ok: true }; }
+    return { ok: false, error: data.error ?? "Registration failed." };
+  }, []);
+
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    const res = await apiFetch("/api/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ credential }),
+    });
+    const data = await res.json();
+    if (res.ok) { setUser(data); return { ok: true }; }
+    return { ok: false, error: data.error ?? "Google login failed." };
+  }, []);
+
+  const logout = useCallback(async () => {
+    await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => {});
     setUser(null);
   }, []);
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, isLoading, login, register, loginWithGoogle, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

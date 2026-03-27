@@ -16,7 +16,20 @@ import Login from "@/pages/Login";
 const queryClient = new QueryClient();
 
 function Router() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#070E1B]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse">
+            <div className="h-6 w-6 rounded-full bg-primary/50" />
+          </div>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest animate-pulse">Loading Ari...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Login />;
