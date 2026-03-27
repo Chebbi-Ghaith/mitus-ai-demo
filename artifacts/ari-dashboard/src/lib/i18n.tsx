@@ -115,6 +115,11 @@ const translations = {
     protocols_none: "No protocols generated yet. Complete a CV analysis session to generate custom injury prevention routines.",
     // Settings
     settings_language: "Language",
+    // Login
+    login_title: "Welcome back, Coach.",
+    login_subtitle: "Sign in to access your analytics dashboard.",
+    login_button: "Log in",
+    login_secure_note: "Your account is secured with industry-standard authentication.",
   },
   it: {
     nav_dashboard: "Dashboard",
@@ -212,6 +217,10 @@ const translations = {
     protocols_start: "Avvia Routine",
     protocols_none: "Nessun protocollo generato. Completa una sessione di analisi CV per generare routine personalizzate.",
     settings_language: "Lingua",
+    login_title: "Bentornato, Coach.",
+    login_subtitle: "Accedi per visualizzare il tuo pannello di analisi.",
+    login_button: "Accedi",
+    login_secure_note: "Il tuo account è protetto con autenticazione di livello industriale.",
   },
   es: {
     nav_dashboard: "Panel",
@@ -309,6 +318,10 @@ const translations = {
     protocols_start: "Iniciar Rutina",
     protocols_none: "Sin protocolos. Completa una sesión de análisis VC para generar rutinas personalizadas.",
     settings_language: "Idioma",
+    login_title: "Bienvenido, Entrenador.",
+    login_subtitle: "Inicia sesión para acceder a tu panel de análisis.",
+    login_button: "Iniciar sesión",
+    login_secure_note: "Tu cuenta está protegida con autenticación de nivel industrial.",
   },
   pt: {
     nav_dashboard: "Painel",
@@ -406,6 +419,10 @@ const translations = {
     protocols_start: "Iniciar Rotina",
     protocols_none: "Sem protocolos. Completa uma sessão de análise VC para gerar rotinas personalizadas.",
     settings_language: "Idioma",
+    login_title: "Bem-vindo, Treinador.",
+    login_subtitle: "Entre para acessar o seu painel de análise.",
+    login_button: "Entrar",
+    login_secure_note: "A sua conta está protegida com autenticação de nível industrial.",
   },
 } as const;
 

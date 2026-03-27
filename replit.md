@@ -17,18 +17,28 @@ AI-powered football (soccer) player performance analytics platform for coaches. 
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Authentication
+
+- **Provider**: Replit Auth (OpenID Connect with PKCE) — `openid-client` v6
+- **Session storage**: PostgreSQL `auth_sessions` table (custom sid, JSON payload, expire)
+- **Middleware**: `artifacts/api-server/src/middlewares/authMiddleware.ts` runs on every request
+- **Routes**: `GET /api/login` → OIDC redirect, `GET /api/callback` → session create, `GET /api/logout` → OIDC end-session
+- **Frontend**: `lib/replit-auth-web` package → `useAuth()` hook → `@/lib/auth.tsx` adapter
+- **Login page**: `artifacts/ari-dashboard/src/pages/Login.tsx` — simple "Log in" button, no custom forms
+
 ## Structure
 
 ```text
 artifacts-monorepo/
 ├── artifacts/
 │   ├── ari-dashboard/        # React + Vite frontend (Ari dashboard)
-│   └── api-server/           # Express API server
+│   └── api-server/           # Express API server (uses Replit Auth)
 ├── lib/
 │   ├── api-spec/             # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/     # Generated React Query hooks
 │   ├── api-zod/              # Generated Zod schemas
-│   └── db/                   # Drizzle ORM schema + DB connection
+│   ├── db/                   # Drizzle ORM schema + DB connection
+│   └── replit-auth-web/      # useAuth() hook for browser OIDC state
 ├── scripts/
 │   └── src/seed.ts           # Database seed script
 └── attached_assets/          # Demo GIFs (copied to ari-dashboard/public/demo/)
@@ -44,6 +54,8 @@ artifacts-monorepo/
 
 ## Database Schema
 
+- `users` - Replit Auth user profiles (id=varchar UUID, email, firstName, lastName, profileImageUrl)
+- `auth_sessions` - Replit Auth server-side sessions (sid, JSON payload, expire timestamp)
 - `players` - Player profiles (name, position, number, nationality, height, weight, muscle mass, injury risk, status)
 - `wearable_data` - Live wearable metrics per player (heart rate, speed, distance, acceleration, fatigue)
 - `medical_records` - Medical records per player (blood type, allergies, medications, clearance status)
@@ -53,9 +65,18 @@ artifacts-monorepo/
 - `movement_analysis` - AI-detected movement events per player per session
 - `prevention_protocols` - AI-suggested prevention programs per player
 - `exercises` - Exercises within each protocol
+- `player_integrations` - Wearable provider connections per player (Whoop, Apple, Oura, Garmin)
+- `player_documents` - Medical/document uploads per player
 
 ## API Endpoints
 
+### Auth (Replit OIDC)
+- `GET /api/auth/user` — current auth state (returns `{user: AuthUser | null}`)
+- `GET /api/login?returnTo=/` — initiate OIDC login flow (PKCE redirect)
+- `GET /api/callback` — OIDC callback, creates session
+- `GET /api/logout` — clear session + OIDC end-session redirect
+
+### App
 - `GET /api/players` — list all players with wearable data
 - `GET /api/players/:id` — player detail
 - `POST /api/players` — create player

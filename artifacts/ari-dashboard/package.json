@@ -75,6 +75,6 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "@react-oauth/google": "^0.13.4"
+    "@workspace/replit-auth-web": "workspace:*"
   }
 }

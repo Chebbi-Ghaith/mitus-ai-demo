@@ -1,91 +1,46 @@
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-
-const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+import { createContext, useContext, type ReactNode } from "react";
+import { useAuth as useReplitAuth } from "@workspace/replit-auth-web";
 
 export interface AuthUser {
-  id: number;
+  id: string;
   name: string;
   role: string;
-  email: string;
+  email: string | null;
   avatarUrl?: string | null;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-  register: (name: string, email: string, password: string, role: string) => Promise<{ ok: boolean; error?: string }>;
-  loginWithGoogle: (credential: string) => Promise<{ ok: boolean; error?: string }>;
-  logout: () => Promise<void>;
+  login: () => void;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   isLoading: true,
-  login: async () => ({ ok: false }),
-  register: async () => ({ ok: false }),
-  loginWithGoogle: async () => ({ ok: false }),
-  logout: async () => {},
+  login: () => {},
+  logout: () => {},
 });
 
-async function apiFetch(path: string, options?: RequestInit) {
-  return fetch(`${BASE}${path}`, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
-    ...options,
-  });
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user: rawUser, isLoading, login, logout } = useReplitAuth();
 
-  // Restore session on mount
-  useEffect(() => {
-    apiFetch("/api/auth/me")
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setUser(data); })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  const login = useCallback(async (email: string, password: string) => {
-    const res = await apiFetch("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (res.ok) { setUser(data); return { ok: true }; }
-    return { ok: false, error: data.error ?? "Login failed." };
-  }, []);
-
-  const register = useCallback(async (name: string, email: string, password: string, role: string) => {
-    const res = await apiFetch("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ name, email, password, role }),
-    });
-    const data = await res.json();
-    if (res.ok) { setUser(data); return { ok: true }; }
-    return { ok: false, error: data.error ?? "Registration failed." };
-  }, []);
-
-  const loginWithGoogle = useCallback(async (credential: string) => {
-    const res = await apiFetch("/api/auth/google", {
-      method: "POST",
-      body: JSON.stringify({ credential }),
-    });
-    const data = await res.json();
-    if (res.ok) { setUser(data); return { ok: true }; }
-    return { ok: false, error: data.error ?? "Google login failed." };
-  }, []);
-
-  const logout = useCallback(async () => {
-    await apiFetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-    setUser(null);
-  }, []);
+  const user: AuthUser | null = rawUser
+    ? {
+        id: rawUser.id,
+        name:
+          [rawUser.firstName, rawUser.lastName].filter(Boolean).join(" ") ||
+          rawUser.email ||
+          "Coach",
+        role: "Coach",
+        email: rawUser.email ?? null,
+        avatarUrl: rawUser.profileImageUrl ?? null,
+      }
+    : null;
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
