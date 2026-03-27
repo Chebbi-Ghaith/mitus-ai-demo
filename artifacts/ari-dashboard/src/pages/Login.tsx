@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, Loader2, AlertCircle, ChevronRight, Globe } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useI18n, LANGUAGES } from "@/lib/i18n";
+import { useI18n, LANGUAGES, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
@@ -15,7 +15,7 @@ const DEMO_ACCOUNTS = [
 
 export default function Login() {
   const { login } = useAuth();
-  const { language, setLanguage } = useI18n();
+  const { locale, setLocale } = useI18n();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -120,7 +120,7 @@ export default function Login() {
               className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-muted-foreground hover:text-foreground hover:border-white/20 transition-all"
             >
               <Globe className="h-4 w-4" />
-              {LANGUAGES.find(l => l.code === language)?.flag}
+              {LANGUAGES.find(l => l.code === locale)?.flag}
             </button>
             <AnimatePresence>
               {showLangMenu && (
@@ -133,16 +133,16 @@ export default function Login() {
                   {LANGUAGES.map(lang => (
                     <button
                       key={lang.code}
-                      onClick={() => { setLanguage(lang.code as any); setShowLangMenu(false); }}
+                      onClick={() => { setLocale(lang.code as Locale); setShowLangMenu(false); }}
                       className={cn(
                         "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors",
-                        language === lang.code
+                        locale === lang.code
                           ? "bg-primary/15 text-primary font-semibold"
                           : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                       )}
                     >
                       <span className="text-base">{lang.flag}</span>
-                      {lang.name}
+                      {lang.label}
                     </button>
                   ))}
                 </motion.div>

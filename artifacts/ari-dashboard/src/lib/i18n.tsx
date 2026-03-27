@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useMemo, useCallback, useEffect, type ReactNode } from "react";
 
 export type Locale = "en" | "it" | "es" | "pt";
 
@@ -419,6 +419,18 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
+// Map country codes to supported locales
+function detectLocaleFromCountry(country: string): Locale {
+  const c = country.toUpperCase();
+  const IT = ["IT"];
+  const ES = ["ES", "MX", "AR", "CO", "CL", "PE", "VE", "EC", "BO", "PY", "UY", "CR", "PA", "DO", "HN", "SV", "GT", "NI", "CU", "PR", "GQ"];
+  const PT = ["BR", "PT", "AO", "MZ", "CV", "GW", "ST", "TL"];
+  if (IT.includes(c)) return "it";
+  if (ES.includes(c)) return "es";
+  if (PT.includes(c)) return "pt";
+  return "en";
+}
+
 function getInitialLocale(): Locale {
   try {
     const saved = localStorage.getItem("ari_locale") as Locale;
@@ -429,6 +441,31 @@ function getInitialLocale(): Locale {
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+
+  // Auto-detect language from IP on first visit (only when no preference saved)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ari_locale");
+      if (saved) return; // respect explicit user preference
+    } catch {}
+
+    fetch("https://ipapi.co/json/")
+      .then(r => r.json())
+      .then((data: { country_code?: string }) => {
+        if (data.country_code) {
+          const detected = detectLocaleFromCountry(data.country_code);
+          setLocaleState(detected);
+        }
+      })
+      .catch(() => {
+        // fallback: try browser language
+        try {
+          const browserLang = navigator.language?.slice(0, 2).toLowerCase();
+          const map: Record<string, Locale> = { it: "it", es: "es", pt: "pt", en: "en" };
+          if (browserLang && map[browserLang]) setLocaleState(map[browserLang]);
+        } catch {}
+      });
+  }, []);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
@@ -444,6 +481,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     [locale]
   );
 
+  // Expose both locale/setLocale and language/setLanguage as aliases
   const value = useMemo<I18nContextValue>(
     () => ({ locale, setLocale, t }),
     [locale, setLocale, t]
