@@ -7,14 +7,17 @@ import {
   Video, 
   Settings,
   BrainCircuit,
-  Globe
+  Globe,
+  LogOut
 } from "lucide-react";
 import { useI18n, LANGUAGES, type Locale } from "@/lib/i18n";
+import { useAuth } from "@/lib/auth";
 import { useState, useRef, useEffect } from "react";
 
 export function Sidebar() {
   const [location] = useLocation();
   const { t, locale, setLocale } = useI18n();
+  const { user, logout } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
 
@@ -83,11 +86,13 @@ export function Sidebar() {
         <div className="glass-panel p-4 rounded-2xl relative overflow-hidden">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-secondary border border-white/10 flex items-center justify-center shrink-0">
-              <span className="font-display font-bold text-sm text-primary">MC</span>
+              <span className="font-display font-bold text-sm text-primary">
+                {user ? user.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : "?"}
+              </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">Coach Carter</p>
-              <p className="text-xs text-muted-foreground">{t("role_head_coach")}</p>
+              <p className="text-sm font-semibold text-foreground">{user?.name ?? "Coach"}</p>
+              <p className="text-xs text-muted-foreground">{user?.role ?? t("role_head_coach")}</p>
             </div>
             <button
               onClick={() => setSettingsOpen(v => !v)}
@@ -127,6 +132,15 @@ export function Sidebar() {
               <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground/60">
                 <span className="text-base leading-none">{currentLang.flag}</span>
                 <span>{currentLang.label}</span>
+              </div>
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <button
+                  onClick={logout}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-destructive/80 hover:text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all font-medium"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
               </div>
             </div>
           )}
