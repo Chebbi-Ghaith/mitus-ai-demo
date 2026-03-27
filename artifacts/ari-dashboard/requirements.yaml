@@ -1,0 +1,23 @@
+packages:
+  "recharts": "For displaying wearable data, fatigue charts, and risk trend lines"
+  "framer-motion": "For premium page transitions and interactive micro-animations"
+  "date-fns": "For formatting session dates and timestamps"
+  "@radix-ui/react-dialog": "For accessible modals and creation forms"
+  "@radix-ui/react-tabs": "For accessible tabs in the player profile view"
+  "@radix-ui/react-slot": "For Radix primitives"
+  "clsx": "For conditional class names"
+  "tailwind-merge": "For merging Tailwind classes safely"
+  "lucide-react": "For beautiful consistent iconography"
+
+images:
+  - path: "artifacts/ari-dashboard/public/images/ari-logo.png"
+    description: "Minimalist, futuristic logo for a sports AI company named 'Ari'. Concept combines a soccer ball and a glowing digital brain/neural network. Deep navy background, neon cyan and emerald green glowing lines. Highly polished, tech startup vibe."
+    aspect_ratio: "1:1"
+  - path: "artifacts/ari-dashboard/public/images/pitch-bg.png"
+    description: "Dark, moody, abstract overhead view of a soccer pitch. Wireframe tactical lines, deep navy background with subtle glowing cyan and green accents. Use as a premium background texture."
+    aspect_ratio: "16:9"
+
+notes:
+  - Expects React Query hooks from @workspace/api-client-react
+  - Uses dark mode by default for a professional sports tech aesthetic
+  - Attached GIFs for CV analysis are imported via @assets alias

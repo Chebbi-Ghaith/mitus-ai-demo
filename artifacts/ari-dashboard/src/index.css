@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: 'Manrope', sans-serif;
+  --font-display: 'Sora', sans-serif;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
+:root {
+  /* Enforce Dark Mode Pro Sports Tech Theme */
+  --background: 224 50% 6%;
+  --foreground: 210 40% 98%;
+
+  --card: 222 47% 9%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 224 50% 6%;
+  --popover-foreground: 210 40% 98%;
+
+  /* Electric Cyan / Blue */
+  --primary: 193 99% 49%;
+  --primary-foreground: 224 50% 6%;
+
+  /* Navy surface */
+  --secondary: 220 40% 13%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  /* Neon Emerald Green for positive/active states */
+  --accent: 152 69% 51%;
+  --accent-foreground: 224 50% 6%;
+
+  /* Neon Rose/Red for high risk/injuries */
+  --destructive: 346 87% 60%;
+  --destructive-foreground: 210 40% 98%;
+
+  /* Amber for medium risk */
+  --warning: 38 92% 50%;
+  --warning-foreground: 224 50% 6%;
+
+  /* Green for low risk/cleared */
+  --success: 152 69% 51%;
+  --success-foreground: 224 50% 6%;
+
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 193 99% 49%;
+
+  --radius: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30 selection:text-primary;
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(0, 212, 255, 0.04) 0%, transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(0, 255, 135, 0.04) 0%, transparent 25%);
+    background-attachment: fixed;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    @apply font-bold tracking-tight;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Glass panel utility */
+.glass-panel {
+  @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl shadow-black/40;
+}
+
+/* Animated scanning line for CV effect */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+.animate-scanline {
+  animation: scanline 3s linear infinite;
+}
+
+/* Pulse glow for risk indicators */
+@keyframes pulse-glow-danger {
+  0%, 100% { box-shadow: 0 0 15px -3px hsl(var(--destructive) / 0.5); }
+  50% { box-shadow: 0 0 25px 2px hsl(var(--destructive) / 0.7); }
+}
+.glow-danger {
+  animation: pulse-glow-danger 2s infinite ease-in-out;
+}

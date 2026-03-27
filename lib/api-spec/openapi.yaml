@@ -1,22 +1,27 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Ari Sports Analytics API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: players
+    description: Player management
+  - name: sessions
+    description: Training and match sessions
+  - name: analysis
+    description: Movement analysis and AI insights
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +29,252 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /players:
+    get:
+      operationId: listPlayers
+      tags: [players]
+      summary: List all players
+      responses:
+        "200":
+          description: List of players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Player"
+    post:
+      operationId: createPlayer
+      tags: [players]
+      summary: Add a new player
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePlayerInput"
+      responses:
+        "201":
+          description: Player created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+
+  /players/{id}:
+    get:
+      operationId: getPlayer
+      tags: [players]
+      summary: Get a player by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Player details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+        "404":
+          description: Not found
+    put:
+      operationId: updatePlayer
+      tags: [players]
+      summary: Update a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePlayerInput"
+      responses:
+        "200":
+          description: Player updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Player"
+
+  /players/{id}/medical:
+    get:
+      operationId: getPlayerMedical
+      tags: [players]
+      summary: Get medical record for a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Medical record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalRecord"
+    put:
+      operationId: updatePlayerMedical
+      tags: [players]
+      summary: Update medical record for a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMedicalInput"
+      responses:
+        "200":
+          description: Medical record updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MedicalRecord"
+
+  /sessions:
+    get:
+      operationId: listSessions
+      tags: [sessions]
+      summary: List all sessions
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Session"
+    post:
+      operationId: createSession
+      tags: [sessions]
+      summary: Create a new session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSessionInput"
+      responses:
+        "201":
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}:
+    get:
+      operationId: getSession
+      tags: [sessions]
+      summary: Get session details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Session details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+
+  /sessions/{id}/analysis:
+    get:
+      operationId: getSessionAnalysis
+      tags: [analysis]
+      summary: Get AI movement analysis for a session
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Movement analysis results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MovementAnalysis"
+
+  /players/{id}/analysis:
+    get:
+      operationId: getPlayerAnalysis
+      tags: [analysis]
+      summary: Get all movement analyses for a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Player movement analyses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MovementAnalysis"
+
+  /players/{id}/protocols:
+    get:
+      operationId: getPlayerProtocols
+      tags: [analysis]
+      summary: Get AI-suggested injury prevention protocols for a player
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Prevention protocols
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PreventionProtocol"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [analysis]
+      summary: Get overall team dashboard statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +285,380 @@ components:
       required:
         - status
 
+    Player:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        number:
+          type: integer
+        position:
+          type: string
+        age:
+          type: integer
+        nationality:
+          type: string
+        height:
+          type: number
+        weight:
+          type: number
+        muscleMass:
+          type: number
+        injuryRisk:
+          type: string
+          enum: [low, medium, high]
+        status:
+          type: string
+          enum: [active, injured, recovering]
+        avatarUrl:
+          type: string
+          nullable: true
+        wearableData:
+          $ref: "#/components/schemas/WearableData"
+      required:
+        - id
+        - name
+        - number
+        - position
+        - age
+        - nationality
+        - height
+        - weight
+        - muscleMass
+        - injuryRisk
+        - status
+        - wearableData
+
+    WearableData:
+      type: object
+      properties:
+        heartRate:
+          type: integer
+        heartRateMax:
+          type: integer
+        speed:
+          type: number
+        distance:
+          type: number
+        acceleration:
+          type: number
+        fatigue:
+          type: integer
+        lastUpdated:
+          type: string
+      required:
+        - heartRate
+        - heartRateMax
+        - speed
+        - distance
+        - acceleration
+        - fatigue
+        - lastUpdated
+
+    MedicalRecord:
+      type: object
+      properties:
+        playerId:
+          type: integer
+        bloodType:
+          type: string
+        allergies:
+          type: array
+          items:
+            type: string
+        injuries:
+          type: array
+          items:
+            $ref: "#/components/schemas/InjuryRecord"
+        medications:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        lastExamDate:
+          type: string
+        clearanceStatus:
+          type: string
+          enum: [cleared, restricted, not-cleared]
+      required:
+        - playerId
+        - bloodType
+        - allergies
+        - injuries
+        - medications
+        - notes
+        - lastExamDate
+        - clearanceStatus
+
+    InjuryRecord:
+      type: object
+      properties:
+        type:
+          type: string
+        date:
+          type: string
+        recovered:
+          type: boolean
+        notes:
+          type: string
+      required:
+        - type
+        - date
+        - recovered
+        - notes
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [match, training, recovery]
+        date:
+          type: string
+        duration:
+          type: integer
+        playerIds:
+          type: array
+          items:
+            type: integer
+        description:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, in-progress, completed]
+      required:
+        - id
+        - type
+        - date
+        - duration
+        - playerIds
+        - description
+        - status
+
+    MovementAnalysis:
+      type: object
+      properties:
+        id:
+          type: integer
+        playerId:
+          type: integer
+        sessionId:
+          type: integer
+        timestamp:
+          type: string
+        movementType:
+          type: string
+        correct:
+          type: boolean
+        riskScore:
+          type: integer
+        detectedIssues:
+          type: array
+          items:
+            type: string
+        bodyParts:
+          type: array
+          items:
+            type: string
+        recommendation:
+          type: string
+        confidence:
+          type: number
+      required:
+        - id
+        - playerId
+        - sessionId
+        - timestamp
+        - movementType
+        - correct
+        - riskScore
+        - detectedIssues
+        - bodyParts
+        - recommendation
+        - confidence
+
+    PreventionProtocol:
+      type: object
+      properties:
+        id:
+          type: integer
+        playerId:
+          type: integer
+        title:
+          type: string
+        category:
+          type: string
+          enum: [warm-up, stretching, strength, recovery, mobility]
+        exercises:
+          type: array
+          items:
+            $ref: "#/components/schemas/Exercise"
+        frequency:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        createdAt:
+          type: string
+      required:
+        - id
+        - playerId
+        - title
+        - category
+        - exercises
+        - frequency
+        - priority
+        - createdAt
+
+    Exercise:
+      type: object
+      properties:
+        name:
+          type: string
+        sets:
+          type: integer
+        reps:
+          type: string
+        duration:
+          type: string
+        notes:
+          type: string
+      required:
+        - name
+        - sets
+        - reps
+        - duration
+        - notes
+
+    DashboardStats:
+      type: object
+      properties:
+        totalPlayers:
+          type: integer
+        activePlayers:
+          type: integer
+        injuredPlayers:
+          type: integer
+        highRiskPlayers:
+          type: integer
+        totalSessions:
+          type: integer
+        recentAnalyses:
+          type: integer
+        teamFatigue:
+          type: number
+        teamAvgHeartRate:
+          type: number
+      required:
+        - totalPlayers
+        - activePlayers
+        - injuredPlayers
+        - highRiskPlayers
+        - totalSessions
+        - recentAnalyses
+        - teamFatigue
+        - teamAvgHeartRate
+
+    CreatePlayerInput:
+      type: object
+      properties:
+        name:
+          type: string
+        number:
+          type: integer
+        position:
+          type: string
+        age:
+          type: integer
+        nationality:
+          type: string
+        height:
+          type: number
+        weight:
+          type: number
+        muscleMass:
+          type: number
+      required:
+        - name
+        - number
+        - position
+        - age
+        - nationality
+        - height
+        - weight
+        - muscleMass
+
+    UpdatePlayerInput:
+      type: object
+      properties:
+        name:
+          type: string
+        number:
+          type: integer
+        position:
+          type: string
+        age:
+          type: integer
+        nationality:
+          type: string
+        height:
+          type: number
+        weight:
+          type: number
+        muscleMass:
+          type: number
+        injuryRisk:
+          type: string
+          enum: [low, medium, high]
+        status:
+          type: string
+          enum: [active, injured, recovering]
+
+    UpdateMedicalInput:
+      type: object
+      properties:
+        bloodType:
+          type: string
+        allergies:
+          type: array
+          items:
+            type: string
+        medications:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        lastExamDate:
+          type: string
+        clearanceStatus:
+          type: string
+          enum: [cleared, restricted, not-cleared]
+
+    CreateSessionInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [match, training, recovery]
+        date:
+          type: string
+        duration:
+          type: integer
+        playerIds:
+          type: array
+          items:
+            type: integer
+        description:
+          type: string
+      required:
+        - type
+        - date
+        - duration
+        - playerIds
+        - description
