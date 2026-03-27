@@ -2,7 +2,7 @@ import { useRoute } from "wouter";
 import { useGetPlayer, useGetPlayerMedical, useGetPlayerProtocols } from "@workspace/api-client-react";
 import * as Tabs from "@radix-ui/react-tabs";
 import { motion } from "framer-motion";
-import { Activity, ShieldAlert, Pill, FileText, ChevronLeft, Calendar, Dumbbell, Play } from "lucide-react";
+import { Activity, ShieldAlert, Pill, FileText, ChevronLeft, Calendar, Dumbbell, Play, BrainCircuit } from "lucide-react";
 import { Link } from "wouter";
 import { formatRiskColor, formatStatusColor, cn } from "@/lib/utils";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
