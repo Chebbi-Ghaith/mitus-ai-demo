@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from "react";
 
 export type Locale = "en" | "it" | "es" | "pt";
 
@@ -113,13 +113,8 @@ const translations = {
     protocols_priority: "Priority",
     protocols_start: "Start Routine",
     protocols_none: "No protocols generated yet. Complete a CV analysis session to generate custom injury prevention routines.",
-    // Status badges
-    status_active: "Active",
-    status_injured: "Injured",
-    status_recovering: "Recovering",
-    risk_low: "low",
-    risk_medium: "medium",
-    risk_high: "high",
+    // Settings
+    settings_language: "Language",
   },
   it: {
     nav_dashboard: "Dashboard",
@@ -139,7 +134,7 @@ const translations = {
     chart_fatigue_title: "Andamento Fatica Squadra",
     chart_fatigue_subtitle: "Dati wearable aggregati su tutte le sessioni",
     alert_critical_action: "Azione Critica",
-    alert_no_risk: "Nessun giocatore attualmente ad alto rischio. La squadra è in condizioni ottimali.",
+    alert_no_risk: "Nessun giocatore ad alto rischio. La squadra è in condizioni ottimali.",
     label_fatigue: "Fatica",
     players_title: "Rosa della Squadra",
     players_subtitle: "Gestisci i giocatori, visualizza le cartelle mediche e analizza le performance.",
@@ -216,12 +211,7 @@ const translations = {
     protocols_priority: "Priorità",
     protocols_start: "Avvia Routine",
     protocols_none: "Nessun protocollo generato. Completa una sessione di analisi CV per generare routine personalizzate.",
-    status_active: "Attivo",
-    status_injured: "Infortunato",
-    status_recovering: "In Recupero",
-    risk_low: "basso",
-    risk_medium: "medio",
-    risk_high: "alto",
+    settings_language: "Lingua",
   },
   es: {
     nav_dashboard: "Panel",
@@ -241,14 +231,14 @@ const translations = {
     chart_fatigue_title: "Tendencia de Fatiga del Equipo",
     chart_fatigue_subtitle: "Datos wearable agregados de todas las sesiones",
     alert_critical_action: "Acción Crítica",
-    alert_no_risk: "Ningún jugador en alto riesgo actualmente. El equipo está en condición óptima.",
+    alert_no_risk: "Ningún jugador en alto riesgo. El equipo está en condición óptima.",
     label_fatigue: "Fatiga",
     players_title: "Plantilla del Equipo",
     players_subtitle: "Gestiona jugadores, revisa historiales médicos y analiza el rendimiento.",
     players_search: "Buscar jugadores...",
     players_add: "Añadir Jugador",
     players_none_title: "Ningún jugador encontrado",
-    players_none_desc: "Ajusta los filtros de búsqueda o añade un nuevo jugador a la plantilla.",
+    players_none_desc: "Ajusta los filtros o añade un nuevo jugador a la plantilla.",
     label_injury_risk: "Riesgo de Lesión",
     dialog_add_player_title: "Añadir Nuevo Jugador",
     field_full_name: "Nombre Completo",
@@ -317,13 +307,8 @@ const translations = {
     protocols_badge: "Generado desde Análisis VC",
     protocols_priority: "Prioridad",
     protocols_start: "Iniciar Rutina",
-    protocols_none: "Sin protocolos generados. Completa una sesión de análisis VC para generar rutinas personalizadas.",
-    status_active: "Activo",
-    status_injured: "Lesionado",
-    status_recovering: "En Recuperación",
-    risk_low: "bajo",
-    risk_medium: "medio",
-    risk_high: "alto",
+    protocols_none: "Sin protocolos. Completa una sesión de análisis VC para generar rutinas personalizadas.",
+    settings_language: "Idioma",
   },
   pt: {
     nav_dashboard: "Painel",
@@ -343,14 +328,14 @@ const translations = {
     chart_fatigue_title: "Tendência de Fadiga da Equipa",
     chart_fatigue_subtitle: "Dados wearable agregados de todas as sessões",
     alert_critical_action: "Ação Crítica",
-    alert_no_risk: "Nenhum jogador em alto risco atualmente. A equipa está em condição ótima.",
+    alert_no_risk: "Nenhum jogador em alto risco. A equipa está em condição ótima.",
     label_fatigue: "Fadiga",
     players_title: "Plantel da Equipa",
     players_subtitle: "Gere jogadores, veja registos médicos e analisa o desempenho.",
     players_search: "Procurar jogadores...",
     players_add: "Adicionar Jogador",
     players_none_title: "Nenhum jogador encontrado",
-    players_none_desc: "Ajuste os filtros de pesquisa ou adicione um novo jogador ao plantel.",
+    players_none_desc: "Ajuste os filtros ou adicione um novo jogador ao plantel.",
     label_injury_risk: "Risco de Lesão",
     dialog_add_player_title: "Adicionar Novo Jogador",
     field_full_name: "Nome Completo",
@@ -419,17 +404,12 @@ const translations = {
     protocols_badge: "Gerado a partir de Análise VC",
     protocols_priority: "Prioridade",
     protocols_start: "Iniciar Rotina",
-    protocols_none: "Sem protocolos gerados. Completa uma sessão de análise VC para gerar rotinas personalizadas.",
-    status_active: "Ativo",
-    status_injured: "Lesionado",
-    status_recovering: "Em Recuperação",
-    risk_low: "baixo",
-    risk_medium: "médio",
-    risk_high: "alto",
+    protocols_none: "Sem protocolos. Completa uma sessão de análise VC para gerar rotinas personalizadas.",
+    settings_language: "Idioma",
   },
 } as const;
 
-type TranslationKey = keyof typeof translations.en;
+export type TranslationKey = keyof typeof translations.en;
 
 interface I18nContextValue {
   locale: Locale;
@@ -439,20 +419,37 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
+function getInitialLocale(): Locale {
+  try {
+    const saved = localStorage.getItem("ari_locale") as Locale;
+    if (saved && Object.keys(translations).includes(saved)) return saved;
+  } catch {}
+  return "en";
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const saved = (localStorage.getItem("ari_locale") as Locale) || "en";
-  const [locale, setLocaleState] = useState<Locale>(saved);
+  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
 
-  const setLocale = (l: Locale) => {
+  const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
-    localStorage.setItem("ari_locale", l);
-  };
+    try { localStorage.setItem("ari_locale", l); } catch {}
+  }, []);
 
-  const t = (key: TranslationKey): string => {
-    return (translations[locale] as Record<string, string>)[key] ?? (translations.en as Record<string, string>)[key] ?? key;
-  };
+  const t = useCallback(
+    (key: TranslationKey): string => {
+      const dict = translations[locale] as Record<string, string>;
+      const fallback = translations.en as Record<string, string>;
+      return dict[key] ?? fallback[key] ?? key;
+    },
+    [locale]
+  );
 
-  return <I18nContext.Provider value={{ locale, setLocale, t }}>{children}</I18nContext.Provider>;
+  const value = useMemo<I18nContextValue>(
+    () => ({ locale, setLocale, t }),
+    [locale, setLocale, t]
+  );
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
 export function useI18n() {

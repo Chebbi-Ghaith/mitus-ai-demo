@@ -105,7 +105,7 @@ export function Sidebar() {
             <div className="mt-4 pt-4 border-t border-white/10">
               <div className="flex items-center gap-2 mb-3">
                 <Globe className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Language</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("settings_language")}</span>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 {LANGUAGES.map(lang => (
