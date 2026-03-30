@@ -113,7 +113,7 @@ export default function Login() {
                 <BrainCircuit className="h-8 w-8 text-white" />
               </div>
               <h1 className="text-5xl font-display font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80 tracking-tight">
-                ARI<span className="text-primary">.</span>
+                Mitus AI<span className="text-primary">.</span>
               </h1>
             </div>
             <p className="text-sm font-semibold text-primary/80 tracking-[0.3em] uppercase mb-8">
@@ -195,7 +195,7 @@ export default function Login() {
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <BrainCircuit className="h-5 w-5 text-white" />
             </div>
-            <h1 className="text-3xl font-display font-black text-white">ARI<span className="text-primary">.</span></h1>
+            <h1 className="text-3xl font-display font-black text-white">Mitus AI<span className="text-primary">.</span></h1>
           </div>
 
           <AnimatePresence mode="wait">
@@ -293,7 +293,7 @@ export default function Login() {
                   <ArrowLeft className="h-4 w-4" /> Back to Sign In
                 </button>
                 <h2 className="text-3xl font-display font-bold text-white mb-1">Create your account.</h2>
-                <p className="text-sm text-muted-foreground mb-6">Join Ari and start tracking your squad.</p>
+                <p className="text-sm text-muted-foreground mb-6">Join Mitus AI and start tracking your squad.</p>
 
                 {error && (
                   <div className="mb-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm">

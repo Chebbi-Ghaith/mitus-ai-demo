@@ -12,7 +12,7 @@ import {
 } from "@workspace/db/schema";
 
 async function seed() {
-  console.log("Seeding Ari database...");
+  console.log("Seeding Mitus AI database...");
 
   const existingPlayers = await db.select().from(playersTable);
   if (existingPlayers.length > 0) {

@@ -25,7 +25,7 @@ function Router() {
           <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse">
             <div className="h-6 w-6 rounded-full bg-primary/50" />
           </div>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest animate-pulse">Loading Ari...</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-widest animate-pulse">Loading Mitus AI...</p>
         </div>
       </div>
     );

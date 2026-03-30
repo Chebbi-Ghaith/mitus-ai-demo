@@ -48,7 +48,7 @@ export function Sidebar() {
         </div>
         <div>
           <h1 className="text-2xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 tracking-wide">
-            ARI<span className="text-primary">.</span>
+            Mitus AI<span className="text-primary">.</span>
           </h1>
           <p className="text-[10px] text-muted-foreground tracking-widest uppercase font-semibold">Pro Analytics</p>
         </div>

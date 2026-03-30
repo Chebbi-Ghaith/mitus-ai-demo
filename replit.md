@@ -1,4 +1,4 @@
-# Ari — Sports Analytics Dashboard
+# Mitus AI — Sports Analytics Dashboard
 
 ## Overview
 
@@ -33,7 +33,7 @@ AI-powered football (soccer) player performance analytics platform for coaches. 
 ```text
 artifacts-monorepo/
 ├── artifacts/
-│   ├── ari-dashboard/        # React + Vite frontend (Ari dashboard)
+│   ├── ari-dashboard/        # React + Vite frontend (Mitus AI dashboard)
 │   └── api-server/           # Express API server (uses Replit Auth)
 ├── lib/
 │   ├── api-spec/             # OpenAPI spec + Orval codegen config

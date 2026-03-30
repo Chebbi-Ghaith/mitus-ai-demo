@@ -68,7 +68,7 @@ const FEATURES = [
   {
     icon: Camera,
     title: "Camera Capture",
-    desc: "No wearables. No patches. Ariadne plugs into your existing stadium cameras — zero disruption to training."
+    desc: "No wearables. No patches. Mitus AI plugs into your existing stadium cameras — zero disruption to training."
   },
   {
     icon: Brain,
@@ -99,7 +99,7 @@ const CASE_STUDIES = [
   {
     club: "Juventus FC",
     country: "Serie A, Italy",
-    quote: "Ariadne gives our staff visibility they never had before — not just what happened in training, but what is likely to happen next.",
+    quote: "Mitus AI gives our staff visibility they never had before — not just what happened in training, but what is likely to happen next.",
     role: "Performance Director, Juventus FC",
     stats: [
       { value: "94%", label: "Accuracy in identifying high-risk movement patterns" },
@@ -146,7 +146,7 @@ export default function App() {
               <Brain className="h-4 w-4 text-white" />
             </div>
             <span className="text-xl font-black tracking-tight text-white">
-              ARI<span className="text-cyan-400">.</span>
+              Mitus AI<span className="text-cyan-400">.</span>
             </span>
           </a>
 
@@ -295,7 +295,7 @@ export default function App() {
               See What <span className="gradient-text">No Human Eye Can</span>
             </h2>
             <p className="mt-5 text-white/50 max-w-2xl mx-auto text-lg">
-              Ariadne uses standard stadium cameras to analyze every movement, frame by frame,
+              Mitus AI uses standard stadium cameras to analyze every movement, frame by frame,
               building a biomechanical profile of each player — in real time.
             </p>
           </AnimatedSection>
@@ -320,7 +320,7 @@ export default function App() {
             </div>
             <p className="text-white/60 text-sm leading-relaxed">
               <span className="text-white font-semibold">Works alongside your existing clinical staff.</span>{" "}
-              Ariadne is a tool, not a replacement. It gives your team the data they need to act sooner.
+              Mitus AI is a tool, not a replacement. It gives your team the data they need to act sooner.
             </p>
           </AnimatedSection>
         </div>
@@ -427,7 +427,7 @@ export default function App() {
                 </div>
 
                 <h2 className="text-4xl sm:text-5xl font-black mb-4">
-                  Use Ariadne for <span className="gradient-text">Free</span>.
+                  Use Mitus AI for <span className="gradient-text">Free</span>.
                 </h2>
                 <p className="text-white/50 max-w-xl mx-auto mb-10 text-lg">
                   We're offering selected clubs full, no-cost access to our technology for an entire season —
@@ -447,7 +447,7 @@ export default function App() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <a
-                    href="mailto:nl@estepshealth.com?subject=Beta Access Request - Ariadne"
+                    href="mailto:nl@estepshealth.com?subject=Beta Access Request - Mitus AI"
                     className="flex items-center gap-2 px-8 py-4 rounded-xl bg-cyan-400 text-[#070E1B] font-bold text-base hover:bg-cyan-300 active:scale-95 transition-all shadow-xl shadow-cyan-400/30"
                   >
                     Request Beta Access <ChevronRight className="h-5 w-5" />
@@ -477,7 +477,7 @@ export default function App() {
               <Brain className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="font-black text-white text-lg">ARI<span className="text-cyan-400">.</span></p>
+              <p className="font-black text-white text-lg">Mitus AI<span className="text-cyan-400">.</span></p>
               <p className="text-white/30 text-xs">Sports Intelligence Platform</p>
             </div>
           </div>
