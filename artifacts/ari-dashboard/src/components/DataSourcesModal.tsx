@@ -88,7 +88,7 @@ export function DataSourcesModal({ playerId, playerName }: Props) {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch(`${BASE}/api/players/${playerId}/integrations`);
+      const res = await fetch(`/api/players/${playerId}/integrations`);
       if (res.ok) {
         const data = await res.json();
         setIntegrations(data.integrations ?? []);
@@ -115,7 +115,7 @@ export function DataSourcesModal({ playerId, playerName }: Props) {
     setLoadingProvider(provider);
     const action = isConnected(provider) ? "disconnect" : "connect";
     try {
-      await fetch(`${BASE}/api/players/${playerId}/integrations`, {
+      await fetch(`/api/players/${playerId}/integrations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider, action }),
@@ -133,7 +133,7 @@ export function DataSourcesModal({ playerId, playerName }: Props) {
     fd.append("file", file);
     fd.append("category", uploadCategory);
     try {
-      const res = await fetch(`${BASE}/api/players/${playerId}/upload`, {
+      const res = await fetch(`/api/players/${playerId}/upload`, {
         method: "POST",
         body: fd,
       });

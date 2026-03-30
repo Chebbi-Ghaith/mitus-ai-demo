@@ -29,7 +29,7 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 async function apiFetch(path: string, options?: RequestInit) {
-  return fetch(`${BASE}${path}`, {
+  return fetch(path, {
     credentials: "include",
     headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
     ...options,
