@@ -1,6 +1,6 @@
 kind = "web"
-previewPath = "/"
-title = "Ari — Sports Analytics Dashboard"
+previewPath = "/app/"
+title = "platform"
 version = "1.0.0"
 id = "artifacts/ari-dashboard"
 router = "path"
@@ -11,7 +11,7 @@ version = "1.0.0"
 
 [[services]]
 name = "web"
-paths = [ "/" ]
+paths = [ "/app/" ]
 localPort = 24973
 
 [services.development]
@@ -28,4 +28,4 @@ to = "/index.html"
 
 [services.env]
 PORT = "24973"
-BASE_PATH = "/"
+BASE_PATH = "/app/"

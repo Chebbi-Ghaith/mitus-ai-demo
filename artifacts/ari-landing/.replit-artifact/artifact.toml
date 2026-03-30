@@ -1,6 +1,6 @@
 kind = "web"
-previewPath = "/ari-landing/"
-title = "Ari — Landing Page"
+previewPath = "/"
+title = "Mitus.AI website"
 version = "1.0.0"
 id = "artifacts/ari-landing"
 router = "path"
@@ -11,7 +11,7 @@ version = "1.0.0"
 
 [[services]]
 name = "web"
-paths = [ "/ari-landing/" ]
+paths = [ "/" ]
 localPort = 20697
 
 [services.development]
@@ -28,4 +28,4 @@ to = "/index.html"
 
 [services.env]
 PORT = "20697"
-BASE_PATH = "/ari-landing/"
+BASE_PATH = "/"

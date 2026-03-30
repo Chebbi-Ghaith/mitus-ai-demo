@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-const PLATFORM_URL = "/";
+const PLATFORM_URL = "/app/";
 
 function useScrolled() {
   const [scrolled, setScrolled] = useState(false);
