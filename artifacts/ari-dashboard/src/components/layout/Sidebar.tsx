@@ -6,7 +6,6 @@ import {
   Activity, 
   Video, 
   Settings,
-  BrainCircuit,
   Globe,
   LogOut
 } from "lucide-react";
@@ -43,9 +42,7 @@ export function Sidebar() {
   return (
     <aside className="w-72 hidden md:flex flex-col border-r border-white/5 bg-card/40 backdrop-blur-2xl h-screen sticky top-0">
       <div className="p-8 flex items-center gap-3">
-        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/20">
-          <BrainCircuit className="h-6 w-6 text-primary-foreground" />
-        </div>
+        <img src="/mitus-logo.png" alt="Mitus AI" className="h-10 w-10" style={{ filter: "invert(1)" }} />
         <div>
           <h1 className="text-2xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 tracking-wide">
             Mitus AI<span className="text-primary">.</span>

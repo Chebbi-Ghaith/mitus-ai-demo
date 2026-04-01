@@ -109,9 +109,7 @@ export default function Login() {
         <div className="relative z-10 flex flex-col items-center text-center px-12 w-full">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-2xl shadow-primary/30">
-                <BrainCircuit className="h-8 w-8 text-white" />
-              </div>
+              <img src={`${BASE}/mitus-logo.png`} alt="Mitus AI" className="h-14 w-14" style={{ filter: "invert(1)" }} />
               <h1 className="text-5xl font-display font-black bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80 tracking-tight">
                 Mitus AI<span className="text-primary">.</span>
               </h1>
@@ -192,9 +190,7 @@ export default function Login() {
         >
           {/* Mobile brand */}
           <div className="flex lg:hidden items-center gap-3 mb-8">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <BrainCircuit className="h-5 w-5 text-white" />
-            </div>
+            <img src={`${BASE}/mitus-logo.png`} alt="Mitus AI" className="h-10 w-10" style={{ filter: "invert(1)" }} />
             <h1 className="text-3xl font-display font-black text-white">Mitus AI<span className="text-primary">.</span></h1>
           </div>
 

@@ -142,9 +142,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between h-16">
           {/* Logo */}
           <a href={PLATFORM_URL} className="flex items-center gap-2.5 group">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center shadow-lg shadow-cyan-400/20">
-              <Brain className="h-4 w-4 text-white" />
-            </div>
+            <img src={`${BASE}/mitus-logo.png`} alt="Mitus AI" className="h-9 w-9" style={{ filter: "invert(1)" }} />
             <span className="text-xl font-black tracking-tight text-white">
               Mitus AI<span className="text-cyan-400">.</span>
             </span>
@@ -473,9 +471,7 @@ export default function App() {
       <footer className="border-t border-white/5 py-12 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center">
-              <Brain className="h-4 w-4 text-white" />
-            </div>
+            <img src={`${BASE}/mitus-logo.png`} alt="Mitus AI" className="h-9 w-9" style={{ filter: "invert(1)" }} />
             <div>
               <p className="font-black text-white text-lg">Mitus AI<span className="text-cyan-400">.</span></p>
               <p className="text-white/30 text-xs">Sports Intelligence Platform</p>
