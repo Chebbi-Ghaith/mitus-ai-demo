@@ -152,13 +152,17 @@ export default function Sessions() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {filteredSessions.map((session) => (
+          {filteredSessions.map((session) => {
+            const jobs = JSON.parse(localStorage.getItem("biomechanics_jobs") || "{}");
+            const linkedJobId = jobs[String(session.id)];
+            const sessionHref = linkedJobId ? `/biomechanics/${linkedJobId}` : `/analysis/${session.id}`;
+            return (
             <div
               key={session.id}
               className="bg-card border border-border p-6 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:border-muted-foreground/30 transition-all group relative overflow-hidden"
             >
               <Link
-                href={`/analysis/${session.id}`}
+                href={sessionHref}
                 className="absolute inset-0 z-0"
               />
 
@@ -217,14 +221,15 @@ export default function Sessions() {
               <div className="sm:text-right relative z-10 flex items-center justify-end gap-3">
                 <EditSessionDialog session={session} onSuccess={refetch} />
                 <DeleteSessionDialog session={session} onSuccess={refetch} />
-                <Link href={`/analysis/${session.id}`}>
+                <Link href={sessionHref}>
                   <span className="inline-flex items-center gap-2 text-sm font-bold text-primary hover:translate-x-1 transition-transform ml-3 border border-primary/20 bg-primary/10 px-3 py-1.5 rounded-xl cursor-pointer">
                     {t("sessions_view_analysis")} &rarr;
                   </span>
                 </Link>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -840,14 +845,21 @@ function BiomechanicsUploadModal({
     if (deepPipeline) formData.append("run_sports2d", "true");
 
     try {
+      let createdSessionId: number | null = null;
       if (pendingSessionData) {
-        await createSessionMutation.mutateAsync({ data: pendingSessionData });
+        const created = await createSessionMutation.mutateAsync({ data: pendingSessionData });
+        createdSessionId = (created as any)?.id ?? null;
       }
       setLogs(["Uploading video to AI gateway..."]);
       const res = await fetch(`${BIOMECHANICS_API}/analyze`, { method: "POST", body: formData, headers: NGROK_HEADERS });
       const data = await res.json();
       if (res.status === 202 || res.ok) {
         setJobId(data.job_id);
+        // Link this job to the session so clicking the session navigates to results
+        const jobs = JSON.parse(localStorage.getItem("biomechanics_jobs") || "{}");
+        if (createdSessionId) jobs[String(createdSessionId)] = data.job_id;
+        jobs["_latest"] = data.job_id;
+        localStorage.setItem("biomechanics_jobs", JSON.stringify(jobs));
         setLogs(prev => [`Job UUID: ${data.job_id}`, "Stream accepted by AI gateway.", ...prev]);
         pollRef.current = setInterval(() => pollStatus(data.job_id), 2500);
       } else {
