@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from "react";
-import { Link } from "wouter";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import {
   useListSessions,
   useCreateSession,
@@ -18,14 +18,14 @@ import {
   Upload,
   FileVideo,
   Cpu,
-  Ruler,
-  Weight,
   Zap,
   CheckCircle2,
   AlertCircle,
   Loader2,
   X,
   FlaskConical,
+  Terminal,
+  ExternalLink,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -38,12 +38,14 @@ import { toast } from "@/hooks/use-toast";
 const BIOMECHANICS_API =
   (import.meta.env.VITE_BIOMECHANICS_API_URL as string | undefined) ?? "";
 
+/** Headers needed to bypass ngrok's free-tier browser interstitial */
+const NGROK_HEADERS: HeadersInit = { "ngrok-skip-browser-warning": "true" };
+
 const YOLO_OPTIONS = [
-  { value: "n", label: "Lite", description: "Fastest" },
+  { value: "n", label: "Nano", description: "Real-time" },
   { value: "s", label: "Standard", description: "Balanced" },
-  { value: "m", label: "Advanced", description: "Recommended" },
-  { value: "l", label: "High-Def", description: "Precise" },
-  { value: "x", label: "Clinical", description: "Maximum" },
+  { value: "m", label: "Advanced", description: "Clinical" },
+  { value: "l", label: "Elite", description: "Max depth" },
 ];
 
 export default function Sessions() {
@@ -739,7 +741,7 @@ function EditSessionDialog({
   );
 }
 
-type UploadStatus = "idle" | "uploading" | "success" | "error";
+type ModalStep = "config" | "processing" | "success" | "error";
 
 function BiomechanicsUploadModal({
   open,
@@ -753,89 +755,139 @@ function BiomechanicsUploadModal({
   onSuccess?: () => void;
 }) {
   const createSessionMutation = useCreateSession();
-  const [status, setStatus] = useState<UploadStatus>("idle");
+  const [, navigate] = useLocation();
+  const [step, setStep] = useState<ModalStep>("config");
   const [errorMsg, setErrorMsg] = useState("");
   const [jobId, setJobId] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [yoloSize, setYoloSize] = useState("m");
+  const [yoloSize, setYoloSize] = useState("s");
+  const [sessionTags, setSessionTags] = useState("Match Performance");
   const [playerId, setPlayerId] = useState(1);
-  const [height, setHeight] = useState(1.75);
-  const [mass, setMass] = useState(75);
   const [deepPipeline, setDeepPipeline] = useState(false);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [progress, setProgress] = useState(0);
+  const [statusText, setStatusText] = useState("INITIALIZING PIPELINE");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const logIndexRef = useRef(0);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
+  useEffect(() => {
+    if (pendingSessionData?.description) setSessionTags(pendingSessionData.description);
+    if (pendingSessionData?.playerIds?.[0]) setPlayerId(pendingSessionData.playerIds[0]);
+  }, [pendingSessionData]);
 
+  useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }, []);
   const handleDragLeave = useCallback(() => setIsDragging(false), []);
-
   const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const dropped = e.dataTransfer.files[0];
-    if (dropped?.type === "video/mp4") setFile(dropped);
+    e.preventDefault(); setIsDragging(false);
+    const d = e.dataTransfer.files[0];
+    if (d?.type === "video/mp4") setFile(d);
   }, []);
 
   const handleClose = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
     onOpenChange(false);
-    // reset after animation
     setTimeout(() => {
-      setStatus("idle");
-      setErrorMsg("");
-      setJobId(null);
-      setFile(null);
+      setStep("config"); setErrorMsg(""); setJobId(null); setFile(null);
+      setLogs([]); setProgress(0); setStatusText("INITIALIZING PIPELINE");
+      logIndexRef.current = 0;
       if (fileInputRef.current) fileInputRef.current.value = "";
     }, 300);
   };
 
+  const pollStatus = useCallback(async (jid: string) => {
+    try {
+      const res = await fetch(`${BIOMECHANICS_API}/analyses/${jid}`, { headers: NGROK_HEADERS });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.logs && Array.isArray(data.logs)) {
+        for (let i = logIndexRef.current; i < data.logs.length; i++) {
+          const msg = data.logs[i].split(" - ")[1] || data.logs[i];
+          setStatusText(msg.toUpperCase());
+          setLogs(prev => [msg, ...prev].slice(0, 8));
+          let p = Math.min(95, ((i + 1) / Math.max(data.logs.length, 1)) * 100 + 10);
+          if (msg.toLowerCase().includes("finalized")) p = 100;
+          setProgress(p);
+          logIndexRef.current = i + 1;
+        }
+      }
+      if (data.status === "success") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setProgress(100); setStatusText("PIPELINE COMPLETED"); setStep("success");
+        if (onSuccess) onSuccess();
+      } else if (data.status === "failed") {
+        if (pollRef.current) clearInterval(pollRef.current);
+        setErrorMsg(data.error || "A critical error occurred in the AI engine.");
+        setStep("error");
+      }
+    } catch { /* polling error, retry on next tick */ }
+  }, [onSuccess]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
-    setStatus("uploading");
-    setErrorMsg("");
-    setJobId(null);
+    setStep("processing"); setErrorMsg(""); setJobId(null);
+    setLogs([]); setProgress(0); logIndexRef.current = 0;
 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("player_id", String(playerId));
     formData.append("yolo_size", yoloSize);
-    formData.append("player_height", String(height));
-    formData.append("mass_kg", String(mass));
+    formData.append("session_tags", sessionTags);
     if (deepPipeline) formData.append("run_sports2d", "true");
 
     try {
       if (pendingSessionData) {
         await createSessionMutation.mutateAsync({ data: pendingSessionData });
       }
-
-      const res = await fetch(`${BIOMECHANICS_API}/analyze`, {
-        method: "POST",
-        body: formData,
-      });
+      setLogs(["Uploading video to AI gateway..."]);
+      const res = await fetch(`${BIOMECHANICS_API}/analyze`, { method: "POST", body: formData, headers: NGROK_HEADERS });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail ?? "Analysis failed");
-      setJobId(data.job_id);
-      setStatus("success");
-      if (onSuccess) onSuccess();
+      if (res.status === 202 || res.ok) {
+        setJobId(data.job_id);
+        setLogs(prev => [`Job UUID: ${data.job_id}`, "Stream accepted by AI gateway.", ...prev]);
+        pollRef.current = setInterval(() => pollStatus(data.job_id), 2500);
+      } else {
+        throw new Error(data.detail ?? "Analysis failed to start");
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Unknown error");
-      setStatus("error");
+      setStep("error");
     }
   };
+
+  const stepIndicator = (
+    <div className="flex items-center justify-center gap-6 mb-6">
+      {[
+        { n: 1, label: "Session Config", key: "config" },
+        { n: 2, label: "AI Processing", key: "processing" },
+        { n: 3, label: "Results", key: "success" },
+      ].map((s, i) => {
+        const active = s.key === step || (step === "error" && s.key === "processing");
+        const done = (step === "processing" && i === 0) || (step === "success" && i < 2) || (step === "error" && i === 0);
+        return (
+          <div key={s.key} className={cn("flex items-center gap-2 text-xs font-semibold transition-colors", active ? "text-primary" : done ? "text-accent" : "text-muted-foreground/50")}>
+            <div className={cn("w-5 h-5 rounded-full border-2 flex items-center justify-center text-[10px] font-bold", active ? "border-primary text-primary" : done ? "border-accent text-accent" : "border-muted-foreground/30")}>
+              {done ? "✓" : s.n}
+            </div>
+            <span className="hidden sm:inline">{s.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <Dialog.Root open={open} onOpenChange={handleClose}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 animate-in fade-in" />
         <Dialog.Content className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-full max-w-2xl max-h-[92vh] flex flex-col bg-card border border-white/10 shadow-2xl rounded-3xl z-50 animate-in zoom-in-95 duration-200">
-          {/* Header */}
           <div className="px-8 pt-8 pb-5 border-b border-white/5 shrink-0 flex items-center justify-between">
             <Dialog.Title className="text-2xl font-display font-bold flex items-center gap-3">
-              <FlaskConical className="h-6 w-6 text-primary" />
-              Biomechanics Analysis
+              <FlaskConical className="h-6 w-6 text-primary" /> Biomechanics Analysis
             </Dialog.Title>
             <Dialog.Close asChild>
               <button className="p-2 rounded-xl text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors">
@@ -845,189 +897,35 @@ function BiomechanicsUploadModal({
           </div>
 
           <div className="flex-1 overflow-y-auto px-8 py-6">
+            {stepIndicator}
+
             <AnimatePresence mode="wait">
-              {status === "success" ? (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex flex-col items-center gap-6 py-10 text-center"
-                >
-                  <div className="h-20 w-20 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center">
-                    <CheckCircle2 className="h-10 w-10 text-accent" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground">Analysis Complete</h3>
-                    {jobId && (
-                      <p className="text-sm text-muted-foreground mt-1 font-mono">Job ID: {jobId}</p>
-                    )}
-                    <p className="text-sm text-muted-foreground mt-3">
-                      Pose data, joint angles, and injury risk metrics are ready.
-                    </p>
-                  </div>
-                  <div className="flex gap-3 w-full max-w-xs">
-                    {jobId && (
-                      <a
-                        href={`${BIOMECHANICS_API}/dashboard.html?job_id=${jobId}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-accent/40 text-accent text-sm font-bold hover:bg-accent/10 transition-all"
-                      >
-                        Open Dashboard
-                      </a>
-                    )}
-                    <button
-                      onClick={handleClose}
-                      className="flex-1 py-3 rounded-xl bg-secondary text-foreground text-sm font-semibold hover:bg-white/10 transition-all"
-                    >
-                      Done
-                    </button>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.form
-                  key="form"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  onSubmit={handleSubmit}
-                  className="space-y-6"
-                >
-                  {/* Drop zone */}
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 block">
-                      Source Video (.mp4)
-                    </label>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="video/mp4"
-                      className="hidden"
-                      onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                      id="bio-video-file"
-                    />
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      className={cn(
-                        "border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all duration-200",
-                        isDragging
-                          ? "border-primary bg-primary/5 scale-[1.01]"
-                          : file
-                            ? "border-accent/50 bg-accent/5"
-                            : "border-white/10 hover:border-white/25 hover:bg-white/5",
-                      )}
-                    >
-                      <AnimatePresence mode="wait">
-                        {file ? (
-                          <motion.div
-                            key="file"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center gap-2 text-center"
-                          >
-                            <div className="h-12 w-12 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center">
-                              <FileVideo className="h-6 w-6 text-accent" />
-                            </div>
-                            <p className="font-semibold text-sm text-foreground">{file.name}</p>
-                            <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setFile(null);
-                                if (fileInputRef.current) fileInputRef.current.value = "";
-                              }}
-                              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors px-3 py-1 rounded border border-white/10 hover:border-destructive/30"
-                            >
-                              <X className="h-3 w-3" /> Remove
-                            </button>
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="empty"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex flex-col items-center gap-2 text-center"
-                          >
-                            <div className="h-12 w-12 rounded-full bg-secondary border border-white/10 flex items-center justify-center">
-                              <Upload className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <p className="text-sm font-semibold text-foreground">
-                              Drop video here or <span className="text-primary">browse</span>
-                            </p>
-                            <p className="text-xs text-muted-foreground">MP4 format only</p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+              {/* ── STEP 1: CONFIG ── */}
+              {step === "config" && (
+                <motion.form key="config" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={handleSubmit} className="space-y-5">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Session tags */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Session Title</label>
+                      <input value={sessionTags} onChange={(e) => setSessionTags(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm" />
+                    </div>
+                    {/* Subject ID */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subject ID</label>
+                      <input type="number" value={playerId} min={1} onChange={(e) => setPlayerId(Number(e.target.value))} className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm" />
                     </div>
                   </div>
 
-                  {/* Subject params */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col gap-2">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5" /> Subject ID
-                      </label>
-                      <input
-                        type="number"
-                        value={playerId}
-                        min={1}
-                        onChange={(e) => setPlayerId(Number(e.target.value))}
-                        className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                        <Ruler className="h-3.5 w-3.5" /> Height (m)
-                      </label>
-                      <input
-                        type="number"
-                        value={height}
-                        step={0.01}
-                        min={1}
-                        max={2.5}
-                        onChange={(e) => setHeight(Number(e.target.value))}
-                        className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                        <Weight className="h-3.5 w-3.5" /> Mass (kg)
-                      </label>
-                      <input
-                        type="number"
-                        value={mass}
-                        step={1}
-                        min={30}
-                        max={200}
-                        onChange={(e) => setMass(Number(e.target.value))}
-                        className="w-full px-4 py-3 rounded-xl bg-secondary border border-white/10 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-foreground text-sm"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tracker precision */}
+                  {/* AI Engine Precision */}
                   <div className="flex flex-col gap-3">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <Cpu className="h-3.5 w-3.5" /> Tracker Precision
+                      <Cpu className="h-3.5 w-3.5" /> AI Engine Precision
                     </label>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                       {YOLO_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setYoloSize(opt.value)}
-                          className={cn(
-                            "flex flex-col items-center gap-0.5 py-3 px-2 rounded-xl border text-center transition-all",
-                            yoloSize === opt.value
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-white/10 bg-secondary text-muted-foreground hover:border-white/25 hover:text-foreground",
-                          )}
-                        >
+                        <button key={opt.value} type="button" onClick={() => setYoloSize(opt.value)}
+                          className={cn("flex flex-col items-center gap-0.5 py-3 px-2 rounded-xl border text-center transition-all",
+                            yoloSize === opt.value ? "border-primary bg-primary/10 text-primary" : "border-white/10 bg-secondary text-muted-foreground hover:border-white/25 hover:text-foreground")}>
                           <span className="text-xs font-bold">{opt.label}</span>
                           <span className="text-[9px] opacity-60">{opt.description}</span>
                         </button>
@@ -1035,68 +933,160 @@ function BiomechanicsUploadModal({
                     </div>
                   </div>
 
-                  {/* Deep pipeline toggle */}
-                  <label className="flex items-center gap-4 cursor-pointer group">
-                    <div
-                      onClick={() => setDeepPipeline((v) => !v)}
-                      className={cn(
-                        "relative h-6 w-11 rounded-full border transition-all duration-200 cursor-pointer shrink-0",
-                        deepPipeline ? "bg-primary border-primary" : "bg-secondary border-white/10",
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all duration-200",
-                          deepPipeline ? "left-[22px]" : "left-0.5",
-                        )}
-                      />
+                  {/* Deep pipeline */}
+                  <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5 cursor-pointer group" onClick={() => setDeepPipeline(v => !v)}>
+                    <div className={cn("relative h-6 w-11 rounded-full border transition-all shrink-0", deepPipeline ? "bg-primary border-primary" : "bg-secondary border-white/10")}>
+                      <div className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all", deepPipeline ? "left-[22px]" : "left-0.5")} />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                        Deep Pipeline (Sports2D + OpenSim)
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        IK solving + marker augmentation — significantly longer
-                      </p>
+                      <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">Deep Biomechanics Pipeline</p>
+                      <p className="text-xs text-muted-foreground">Enables joint torque and force estimation.</p>
                     </div>
-                  </label>
+                  </div>
 
-                  {/* Error */}
-                  {status === "error" && (
-                    <div className="flex items-start gap-3 p-4 rounded-xl bg-destructive/10 border border-destructive/20">
-                      <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                      <p className="text-sm text-destructive font-mono break-all">{errorMsg}</p>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
-                    <Dialog.Close asChild>
-                      <button
-                        type="button"
-                        className="px-5 py-2.5 rounded-xl bg-secondary text-foreground font-medium hover:bg-white/10 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </Dialog.Close>
-                    <button
-                      type="submit"
-                      disabled={!file || status === "uploading"}
-                      className={cn(
-                        "px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-wider transition-all flex items-center gap-2",
-                        !file || status === "uploading"
-                          ? "bg-secondary text-muted-foreground cursor-not-allowed"
-                          : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20",
-                      )}
-                    >
-                      {status === "uploading" ? (
-                        <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+                  {/* Drop zone */}
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 block">Recording Source (.mp4)</label>
+                    <input ref={fileInputRef} type="file" accept="video/mp4" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                    <div onClick={() => fileInputRef.current?.click()} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+                      className={cn("border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all min-h-[180px]",
+                        isDragging ? "border-primary bg-primary/5 scale-[1.01]" : file ? "border-accent/50 bg-accent/5" : "border-white/10 hover:border-white/25 hover:bg-white/5")}>
+                      {file ? (
+                        <div className="flex flex-col items-center gap-2 text-center">
+                          <div className="h-12 w-12 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center">
+                            <FileVideo className="h-6 w-6 text-accent" />
+                          </div>
+                          <p className="font-semibold text-sm text-foreground">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
+                          <button type="button" onClick={(e) => { e.stopPropagation(); setFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors px-3 py-1 rounded border border-white/10 hover:border-destructive/30">
+                            <X className="h-3 w-3" /> Remove
+                          </button>
+                        </div>
                       ) : (
-                        <><Zap className="h-4 w-4" /> Run Analysis</>
+                        <div className="flex flex-col items-center gap-2 text-center">
+                          <div className="h-12 w-12 rounded-full bg-secondary border border-white/10 flex items-center justify-center">
+                            <Upload className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                          <p className="text-sm font-semibold text-foreground">Drop video or click to <span className="text-primary">browse</span></p>
+                          <p className="text-xs text-muted-foreground">H.264 / MP4 up to 500MB</p>
+                        </div>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Submit */}
+                  <button type="submit" disabled={!file}
+                    className={cn("w-full py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-3",
+                      !file ? "bg-secondary text-muted-foreground cursor-not-allowed" : "bg-primary text-primary-foreground hover:opacity-90 hover:shadow-lg hover:shadow-primary/20 active:scale-[0.99]")}>
+                    <Zap className="h-4 w-4" /> Start AI Analysis
+                  </button>
+                </motion.form>
+              )}
+
+              {/* ── STEP 2: PROCESSING ── */}
+              {step === "processing" && (
+                <motion.div key="processing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex flex-col items-center text-center py-6">
+                  {/* Double spinner */}
+                  <div className="relative w-28 h-28 mb-8">
+                    <div className="absolute inset-0 border-[3px] border-primary/10 border-t-primary rounded-full animate-spin" style={{ animationDuration: "1s" }} />
+                    <div className="absolute inset-3 border-[3px] border-accent/10 border-b-accent rounded-full animate-spin" style={{ animationDuration: "1.5s", animationDirection: "reverse" }} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xl font-bold text-primary font-mono">{Math.round(progress)}%</span>
+                    </div>
+                  </div>
+
+                  <h2 className="text-xl font-bold mb-2">Neural Network Active</h2>
+                  <p className="text-sm text-muted-foreground max-w-md mb-8">
+                    The Mitus AI Engine is processing your video frames — pose estimation, trajectory mapping, and biomechanical modeling.
+                  </p>
+
+                  {/* Progress bar */}
+                  <div className="w-full max-w-md mb-2">
+                    <div className="flex justify-between text-xs font-semibold mb-2">
+                      <span className="text-primary font-mono">{statusText}</span>
+                      <span className="text-muted-foreground">{Math.round(progress)}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                      <motion.div className="h-full rounded-full bg-gradient-to-r from-primary to-accent" animate={{ width: `${progress}%` }} transition={{ duration: 0.5, ease: "easeOut" }} />
+                    </div>
+                  </div>
+
+                  {/* Telemetry log */}
+                  <div className="w-full max-w-md mt-6 bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-left">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                      <h4 className="text-[10px] uppercase font-semibold text-muted-foreground tracking-widest">Telemetry Log</h4>
+                    </div>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {logs.length === 0 ? (
+                        <p className="text-xs text-muted-foreground/50 italic">Waiting for pipeline events...</p>
+                      ) : logs.map((log, i) => (
+                        <div key={i} className="text-xs text-muted-foreground py-1.5 px-3 bg-white/[0.02] rounded-lg">
+                          <span className="text-primary mr-2 font-mono">[{new Date().toLocaleTimeString()}]</span>{log}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── STEP 3: SUCCESS ── */}
+              {step === "success" && (
+                <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-6 py-8 text-center">
+                  <div className="h-20 w-20 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center">
+                    <CheckCircle2 className="h-10 w-10 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">Analysis Complete</h3>
+                    {jobId && <p className="text-sm text-muted-foreground mt-1 font-mono">Job ID: {jobId}</p>}
+                    <p className="text-sm text-muted-foreground mt-3">Pose data, joint angles, and injury risk metrics are ready.</p>
+                  </div>
+                  <div className="flex gap-3 w-full max-w-sm">
+                    <button onClick={() => { handleClose(); if (jobId) navigate(`/biomechanics/${jobId}`); }}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 transition-all">
+                      <ExternalLink className="h-4 w-4" /> View Results
+                    </button>
+                    <button onClick={handleClose} className="flex-1 py-3 rounded-xl bg-secondary text-foreground text-sm font-semibold hover:bg-white/10 transition-all">
+                      Done
                     </button>
                   </div>
-                </motion.form>
+                </motion.div>
+              )}
+
+              {/* ── ERROR ── */}
+              {step === "error" && (
+                <motion.div key="error" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-6 py-8 text-center">
+                  <div className="h-20 w-20 rounded-full bg-destructive/10 border border-destructive/30 flex items-center justify-center">
+                    <AlertCircle className="h-10 w-10 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-foreground">Analysis Failed</h3>
+                    <p className="text-sm text-destructive/80 mt-2 font-mono break-all max-w-md">{errorMsg}</p>
+                  </div>
+                  {logs.length > 0 && (
+                    <div className="w-full max-w-md bg-white/[0.02] border border-white/5 rounded-2xl p-4 text-left">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                        <h4 className="text-[10px] uppercase font-semibold text-muted-foreground tracking-widest">Last Telemetry</h4>
+                      </div>
+                      <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                        {logs.slice(0, 5).map((log, i) => (
+                          <div key={i} className="text-xs text-muted-foreground py-1.5 px-3 bg-white/[0.02] rounded-lg">{log}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-3">
+                    <button onClick={() => { setStep("config"); setErrorMsg(""); setLogs([]); setProgress(0); logIndexRef.current = 0; }}
+                      className="px-6 py-2.5 rounded-xl bg-secondary text-foreground font-semibold hover:bg-white/10 transition-all">
+                      Try Again
+                    </button>
+                    <button onClick={handleClose} className="px-6 py-2.5 rounded-xl border border-white/10 text-muted-foreground font-semibold hover:text-foreground transition-all">
+                      Close
+                    </button>
+                  </div>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>

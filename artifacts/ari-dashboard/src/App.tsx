@@ -11,6 +11,7 @@ import Players from "@/pages/Players";
 import PlayerProfile from "@/pages/PlayerProfile";
 import Sessions from "@/pages/Sessions";
 import Analysis from "@/pages/Analysis";
+import BiomechanicsResults from "@/pages/BiomechanicsResults";
 import Login from "@/pages/Login";
 import { CommandPalette } from "@/components/CommandPalette";
 
@@ -45,6 +46,7 @@ function Router() {
         <Route path="/sessions" component={Sessions} />
         <Route path="/analysis/:id" component={Analysis} />
         <Route path="/analysis" component={Analysis} />
+        <Route path="/biomechanics/:jobId" component={BiomechanicsResults} />
         <Route component={NotFound} />
       </Switch>
       <CommandPalette />
