@@ -5,6 +5,8 @@ import {
   wearableDataTable,
   medicalRecordsTable,
   injuryHistoryTable,
+  playerIntegrationsTable,
+  playerDocumentsTable,
 } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 
@@ -26,7 +28,8 @@ router.get("/players", async (req, res) => {
               distance: w.distance,
               acceleration: w.acceleration,
               fatigue: w.fatigue,
-              lastUpdated: w.lastUpdated?.toISOString() ?? new Date().toISOString(),
+              lastUpdated:
+                w.lastUpdated?.toISOString() ?? new Date().toISOString(),
             }
           : {
               heartRate: 72,
@@ -49,9 +52,15 @@ router.get("/players", async (req, res) => {
 router.get("/players/:id", async (req, res) => {
   const id = parseInt(req.params.id);
   try {
-    const [player] = await db.select().from(playersTable).where(eq(playersTable.id, id));
+    const [player] = await db
+      .select()
+      .from(playersTable)
+      .where(eq(playersTable.id, id));
     if (!player) return res.status(404).json({ error: "Player not found" });
-    const [wearable] = await db.select().from(wearableDataTable).where(eq(wearableDataTable.playerId, id));
+    const [wearable] = await db
+      .select()
+      .from(wearableDataTable)
+      .where(eq(wearableDataTable.playerId, id));
     return res.json({
       ...player,
       wearableData: wearable
@@ -62,7 +71,8 @@ router.get("/players/:id", async (req, res) => {
             distance: wearable.distance,
             acceleration: wearable.acceleration,
             fatigue: wearable.fatigue,
-            lastUpdated: wearable.lastUpdated?.toISOString() ?? new Date().toISOString(),
+            lastUpdated:
+              wearable.lastUpdated?.toISOString() ?? new Date().toISOString(),
           }
         : {
             heartRate: 72,
@@ -82,10 +92,28 @@ router.get("/players/:id", async (req, res) => {
 
 router.post("/players", async (req, res) => {
   try {
-    const { name, number, position, age, nationality, height, weight, muscleMass } = req.body;
+    const {
+      name,
+      number,
+      position,
+      age,
+      nationality,
+      height,
+      weight,
+      muscleMass,
+    } = req.body;
     const [player] = await db
       .insert(playersTable)
-      .values({ name, number, position, age, nationality, height, weight, muscleMass })
+      .values({
+        name,
+        number,
+        position,
+        age,
+        nationality,
+        height,
+        weight,
+        muscleMass,
+      })
       .returning();
     await db.insert(wearableDataTable).values({
       playerId: player.id,
@@ -96,7 +124,20 @@ router.post("/players", async (req, res) => {
       acceleration: 0,
       fatigue: 10,
     });
-    return res.status(201).json({ ...player, wearableData: { heartRate: 72, heartRateMax: 190, speed: 0, distance: 0, acceleration: 0, fatigue: 10, lastUpdated: new Date().toISOString() } });
+    return res
+      .status(201)
+      .json({
+        ...player,
+        wearableData: {
+          heartRate: 72,
+          heartRateMax: 190,
+          speed: 0,
+          distance: 0,
+          acceleration: 0,
+          fatigue: 10,
+          lastUpdated: new Date().toISOString(),
+        },
+      });
   } catch (err) {
     req.log.error({ err }, "Failed to create player");
     return res.status(500).json({ error: "Internal server error" });
@@ -106,7 +147,18 @@ router.post("/players", async (req, res) => {
 router.put("/players/:id", async (req, res) => {
   const id = parseInt(req.params.id);
   try {
-    const { name, number, position, age, nationality, height, weight, muscleMass, injuryRisk, status } = req.body;
+    const {
+      name,
+      number,
+      position,
+      age,
+      nationality,
+      height,
+      weight,
+      muscleMass,
+      injuryRisk,
+      status,
+    } = req.body;
     const updates: Partial<typeof playersTable.$inferInsert> = {};
     if (name !== undefined) updates.name = name;
     if (number !== undefined) updates.number = number;
@@ -118,14 +170,38 @@ router.put("/players/:id", async (req, res) => {
     if (muscleMass !== undefined) updates.muscleMass = muscleMass;
     if (injuryRisk !== undefined) updates.injuryRisk = injuryRisk;
     if (status !== undefined) updates.status = status;
-    const [updated] = await db.update(playersTable).set(updates).where(eq(playersTable.id, id)).returning();
+    const [updated] = await db
+      .update(playersTable)
+      .set(updates)
+      .where(eq(playersTable.id, id))
+      .returning();
     if (!updated) return res.status(404).json({ error: "Player not found" });
-    const [wearable] = await db.select().from(wearableDataTable).where(eq(wearableDataTable.playerId, id));
+    const [wearable] = await db
+      .select()
+      .from(wearableDataTable)
+      .where(eq(wearableDataTable.playerId, id));
     return res.json({
       ...updated,
       wearableData: wearable
-        ? { heartRate: wearable.heartRate, heartRateMax: wearable.heartRateMax, speed: wearable.speed, distance: wearable.distance, acceleration: wearable.acceleration, fatigue: wearable.fatigue, lastUpdated: wearable.lastUpdated?.toISOString() ?? new Date().toISOString() }
-        : { heartRate: 72, heartRateMax: 190, speed: 0, distance: 0, acceleration: 0, fatigue: 10, lastUpdated: new Date().toISOString() },
+        ? {
+            heartRate: wearable.heartRate,
+            heartRateMax: wearable.heartRateMax,
+            speed: wearable.speed,
+            distance: wearable.distance,
+            acceleration: wearable.acceleration,
+            fatigue: wearable.fatigue,
+            lastUpdated:
+              wearable.lastUpdated?.toISOString() ?? new Date().toISOString(),
+          }
+        : {
+            heartRate: 72,
+            heartRateMax: 190,
+            speed: 0,
+            distance: 0,
+            acceleration: 0,
+            fatigue: 10,
+            lastUpdated: new Date().toISOString(),
+          },
     });
   } catch (err) {
     req.log.error({ err }, "Failed to update player");
@@ -133,12 +209,43 @@ router.put("/players/:id", async (req, res) => {
   }
 });
 
+router.delete("/players/:id", async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const [player] = await db
+      .select()
+      .from(playersTable)
+      .where(eq(playersTable.id, id));
+    if (!player) return res.status(404).json({ error: "Player not found" });
+    
+    // Delete all dependent records first to avoid foreign key constraints
+    await db.delete(playerDocumentsTable).where(eq(playerDocumentsTable.playerId, id));
+    await db.delete(playerIntegrationsTable).where(eq(playerIntegrationsTable.playerId, id));
+    await db.delete(injuryHistoryTable).where(eq(injuryHistoryTable.playerId, id));
+    await db.delete(medicalRecordsTable).where(eq(medicalRecordsTable.playerId, id));
+    await db.delete(wearableDataTable).where(eq(wearableDataTable.playerId, id));
+    
+    await db.delete(playersTable).where(eq(playersTable.id, id));
+    return res.status(200).json({ message: "Player deleted successfully" });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete player");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/players/:id/medical", async (req, res) => {
   const id = parseInt(req.params.id);
   try {
-    const [record] = await db.select().from(medicalRecordsTable).where(eq(medicalRecordsTable.playerId, id));
-    if (!record) return res.status(404).json({ error: "Medical record not found" });
-    const injuries = await db.select().from(injuryHistoryTable).where(eq(injuryHistoryTable.playerId, id));
+    const [record] = await db
+      .select()
+      .from(medicalRecordsTable)
+      .where(eq(medicalRecordsTable.playerId, id));
+    if (!record)
+      return res.status(404).json({ error: "Medical record not found" });
+    const injuries = await db
+      .select()
+      .from(injuryHistoryTable)
+      .where(eq(injuryHistoryTable.playerId, id));
     return res.json({
       playerId: record.playerId,
       bloodType: record.bloodType,
@@ -163,22 +270,51 @@ router.get("/players/:id/medical", async (req, res) => {
 router.put("/players/:id/medical", async (req, res) => {
   const id = parseInt(req.params.id);
   try {
-    const { bloodType, allergies, medications, notes, lastExamDate, clearanceStatus } = req.body;
+    const {
+      bloodType,
+      allergies,
+      medications,
+      notes,
+      lastExamDate,
+      clearanceStatus,
+    } = req.body;
     const updates: Partial<typeof medicalRecordsTable.$inferInsert> = {};
     if (bloodType !== undefined) updates.bloodType = bloodType;
     if (allergies !== undefined) updates.allergies = allergies;
     if (medications !== undefined) updates.medications = medications;
     if (notes !== undefined) updates.notes = notes;
     if (lastExamDate !== undefined) updates.lastExamDate = lastExamDate;
-    if (clearanceStatus !== undefined) updates.clearanceStatus = clearanceStatus;
-    const existing = await db.select().from(medicalRecordsTable).where(eq(medicalRecordsTable.playerId, id));
+    if (clearanceStatus !== undefined)
+      updates.clearanceStatus = clearanceStatus;
+    const existing = await db
+      .select()
+      .from(medicalRecordsTable)
+      .where(eq(medicalRecordsTable.playerId, id));
     let record;
     if (existing.length === 0) {
-      [record] = await db.insert(medicalRecordsTable).values({ playerId: id, bloodType: bloodType || "A+", allergies: allergies || [], medications: medications || [], notes: notes || "", lastExamDate: lastExamDate || new Date().toISOString().split("T")[0], clearanceStatus: clearanceStatus || "cleared" }).returning();
+      [record] = await db
+        .insert(medicalRecordsTable)
+        .values({
+          playerId: id,
+          bloodType: bloodType || "A+",
+          allergies: allergies || [],
+          medications: medications || [],
+          notes: notes || "",
+          lastExamDate: lastExamDate || new Date().toISOString().split("T")[0],
+          clearanceStatus: clearanceStatus || "cleared",
+        })
+        .returning();
     } else {
-      [record] = await db.update(medicalRecordsTable).set(updates).where(eq(medicalRecordsTable.playerId, id)).returning();
+      [record] = await db
+        .update(medicalRecordsTable)
+        .set(updates)
+        .where(eq(medicalRecordsTable.playerId, id))
+        .returning();
     }
-    const injuries = await db.select().from(injuryHistoryTable).where(eq(injuryHistoryTable.playerId, id));
+    const injuries = await db
+      .select()
+      .from(injuryHistoryTable)
+      .where(eq(injuryHistoryTable.playerId, id));
     return res.json({
       playerId: record!.playerId,
       bloodType: record!.bloodType,
@@ -187,7 +323,12 @@ router.put("/players/:id/medical", async (req, res) => {
       notes: record!.notes,
       lastExamDate: record!.lastExamDate,
       clearanceStatus: record!.clearanceStatus,
-      injuries: injuries.map((i) => ({ type: i.type, date: i.date, recovered: i.recovered === 1, notes: i.notes })),
+      injuries: injuries.map((i) => ({
+        type: i.type,
+        date: i.date,
+        recovered: i.recovered === 1,
+        notes: i.notes,
+      })),
     });
   } catch (err) {
     req.log.error({ err }, "Failed to update medical record");

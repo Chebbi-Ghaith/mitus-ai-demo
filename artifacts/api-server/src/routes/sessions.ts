@@ -56,6 +56,52 @@ router.post("/sessions", async (req, res) => {
   }
 });
 
+router.put("/sessions/:id", async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const { type, date, duration, playerIds, description, status } = req.body;
+    
+    const [existing] = await db.select().from(sessionsTable).where(eq(sessionsTable.id, id));
+    if (!existing) return res.status(404).json({ error: "Session not found" });
+
+    const [session] = await db
+      .update(sessionsTable)
+      .set({ type, date, duration, description, status })
+      .where(eq(sessionsTable.id, id))
+      .returning();
+
+    if (playerIds && Array.isArray(playerIds)) {
+      await db.delete(sessionPlayersTable).where(eq(sessionPlayersTable.sessionId, id));
+      for (const pid of playerIds) {
+        await db.insert(sessionPlayersTable).values({ sessionId: session.id, playerId: pid });
+      }
+    }
+    
+    const updatedPlayers = await db.select().from(sessionPlayersTable).where(eq(sessionPlayersTable.sessionId, id));
+    return res.json({ ...session, playerIds: updatedPlayers.map(p => p.playerId) });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update session");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/sessions/:id", async (req, res) => {
+  const id = parseInt(req.params.id);
+  try {
+    const [existing] = await db.select().from(sessionsTable).where(eq(sessionsTable.id, id));
+    if (!existing) return res.status(404).json({ error: "Session not found" });
+
+    await db.delete(sessionPlayersTable).where(eq(sessionPlayersTable.sessionId, id));
+    await db.delete(movementAnalysisTable).where(eq(movementAnalysisTable.sessionId, id));
+    await db.delete(sessionsTable).where(eq(sessionsTable.id, id));
+
+    return res.json({ message: "Session deleted successfully" });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete session");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/sessions/:id/analysis", async (req, res) => {
   const id = parseInt(req.params.id);
   try {

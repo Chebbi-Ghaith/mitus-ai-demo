@@ -14,7 +14,10 @@ async function seedUsers() {
   const hash = await bcrypt.hash("coach123", 12);
 
   for (const u of DEMO_USERS) {
-    const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, u.email));
+    const [existing] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, u.email));
     if (!existing) {
       await db.insert(usersTable).values({
         name: u.name,
@@ -26,7 +29,10 @@ async function seedUsers() {
       console.log(`✓ Created: ${u.email}`);
     } else {
       // Update password hash to ensure it's correct
-      await db.update(usersTable).set({ passwordHash: hash }).where(eq(usersTable.email, u.email));
+      await db
+        .update(usersTable)
+        .set({ passwordHash: hash })
+        .where(eq(usersTable.email, u.email));
       console.log(`↺ Updated: ${u.email}`);
     }
   }
@@ -35,4 +41,7 @@ async function seedUsers() {
   process.exit(0);
 }
 
-seedUsers().catch(e => { console.error(e); process.exit(1); });
+seedUsers().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

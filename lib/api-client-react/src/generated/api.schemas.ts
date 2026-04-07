@@ -294,6 +294,14 @@ export interface CreateSessionInput {
  */
 export type AuthorizationSessionHeaderParameter = string;
 
+export type DeletePlayer200 = {
+  message?: string;
+};
+
+export type DeleteSession200 = {
+  message?: string;
+};
+
 export type BeginBrowserLoginParams = {
   /**
    * Relative path to redirect to after login (must start with `/`). Defaults to `/`.

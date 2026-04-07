@@ -22,6 +22,8 @@ import type {
   CreatePlayerInput,
   CreateSessionInput,
   DashboardStats,
+  DeletePlayer200,
+  DeleteSession200,
   ErrorEnvelope,
   HandleBrowserLoginCallbackParams,
   HealthStatus,
@@ -453,6 +455,90 @@ export const useUpdatePlayer = <
 };
 
 /**
+ * @summary Delete a player
+ */
+export const getDeletePlayerUrl = (id: number) => {
+  return `/api/players/${id}`;
+};
+
+export const deletePlayer = async (
+  id: number,
+  options?: RequestInit,
+): Promise<DeletePlayer200> => {
+  return customFetch<DeletePlayer200>(getDeletePlayerUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeletePlayerMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePlayer>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deletePlayer>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deletePlayer"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deletePlayer>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deletePlayer(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeletePlayerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deletePlayer>>
+>;
+
+export type DeletePlayerMutationError = ErrorType<void>;
+
+/**
+ * @summary Delete a player
+ */
+export const useDeletePlayer = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deletePlayer>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deletePlayer>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeletePlayerMutationOptions(options));
+};
+
+/**
  * @summary Get medical record for a player
  */
 export const getGetPlayerMedicalUrl = (id: number) => {
@@ -873,6 +959,177 @@ export function useGetSession<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update a session
+ */
+export const getUpdateSessionUrl = (id: number) => {
+  return `/api/sessions/${id}`;
+};
+
+export const updateSession = async (
+  id: number,
+  createSessionInput: CreateSessionInput,
+  options?: RequestInit,
+): Promise<Session> => {
+  return customFetch<Session>(getUpdateSessionUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSessionInput),
+  });
+};
+
+export const getUpdateSessionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSession>>,
+    TError,
+    { id: number; data: BodyType<CreateSessionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateSession>>,
+  TError,
+  { id: number; data: BodyType<CreateSessionInput> },
+  TContext
+> => {
+  const mutationKey = ["updateSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateSession>>,
+    { id: number; data: BodyType<CreateSessionInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateSession(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateSession>>
+>;
+export type UpdateSessionMutationBody = BodyType<CreateSessionInput>;
+export type UpdateSessionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a session
+ */
+export const useUpdateSession = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSession>>,
+    TError,
+    { id: number; data: BodyType<CreateSessionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateSession>>,
+  TError,
+  { id: number; data: BodyType<CreateSessionInput> },
+  TContext
+> => {
+  return useMutation(getUpdateSessionMutationOptions(options));
+};
+
+/**
+ * @summary Delete a session
+ */
+export const getDeleteSessionUrl = (id: number) => {
+  return `/api/sessions/${id}`;
+};
+
+export const deleteSession = async (
+  id: number,
+  options?: RequestInit,
+): Promise<DeleteSession200> => {
+  return customFetch<DeleteSession200>(getDeleteSessionUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteSessionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteSession>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteSession>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteSession>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteSession(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteSession>>
+>;
+
+export type DeleteSessionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a session
+ */
+export const useDeleteSession = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteSession>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteSession>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteSessionMutationOptions(options));
+};
 
 /**
  * @summary Get AI movement analysis for a session

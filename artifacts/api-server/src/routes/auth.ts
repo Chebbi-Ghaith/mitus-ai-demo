@@ -2,6 +2,8 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import bcrypt from "bcrypt";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
+import { OAuth2Client } from "google-auth-library";
 
 declare module "express-session" {
   interface SessionData {
@@ -21,6 +23,21 @@ function safeUser(u: { id: string; name: string; email: string; role: string; av
   return { id: u.id, name: u.name, email: u.email, role: u.role, avatarUrl: u.avatarUrl };
 }
 
+const loginSchema = z.object({
+  email: z.string().min(1).email(),
+  password: z.string().min(1),
+});
+
+const registerSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().min(1).email(),
+  password: z.string().min(6),
+  role: z.string().optional().default("Head Coach"),
+});
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+
 // GET /api/auth/me
 router.get("/auth/me", (req: Request, res: Response) => {
   if (!req.session?.user) {
@@ -32,15 +49,13 @@ router.get("/auth/me", (req: Request, res: Response) => {
 
 // POST /api/auth/register
 router.post("/auth/register", async (req: Request, res: Response) => {
-  const { name, email, password, role } = req.body as Record<string, string>;
-  if (!name || !email || !password) {
-    res.status(400).json({ error: "Name, email and password are required." });
+  const result = registerSchema.safeParse(req.body);
+  if (!result.success) {
+    res.status(400).json({ error: "Invalid registration data provided." });
     return;
   }
-  if (password.length < 6) {
-    res.status(400).json({ error: "Password must be at least 6 characters." });
-    return;
-  }
+  const { name, email, password, role } = result.data;
+
   const existing = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (existing.length > 0) {
     res.status(409).json({ error: "Email already in use." });
@@ -60,11 +75,13 @@ router.post("/auth/register", async (req: Request, res: Response) => {
 
 // POST /api/auth/login
 router.post("/auth/login", async (req: Request, res: Response) => {
-  const { email, password } = req.body as Record<string, string>;
-  if (!email || !password) {
+  const result = loginSchema.safeParse(req.body);
+  if (!result.success) {
     res.status(400).json({ error: "Email and password are required." });
     return;
   }
+  const { email, password } = result.data;
+
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
   if (!user || !user.passwordHash) {
     res.status(401).json({ error: "Invalid email or password." });
@@ -87,14 +104,22 @@ router.post("/auth/google", async (req: Request, res: Response) => {
     return;
   }
 
-  // Verify the Google JWT via tokeninfo endpoint
+  // Verify the Google JWT via google-auth-library
   let googleUser: { sub: string; email: string; name: string; picture?: string } | null = null;
   try {
-    const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`;
-    const r = await fetch(url);
-    if (!r.ok) throw new Error("Token verification failed");
-    googleUser = await r.json() as { sub: string; email: string; name: string; picture?: string };
-  } catch {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.sub || !payload.email) throw new Error("Missing payload fields");
+    googleUser = {
+      sub: payload.sub,
+      email: payload.email,
+      name: payload.name || payload.email,
+      picture: payload.picture,
+    };
+  } catch (err: any) {
+    req.log?.error({ err }, "Google Token verification failed");
     res.status(401).json({ error: "Invalid Google credential." });
     return;
   }

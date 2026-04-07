@@ -132,6 +132,17 @@ export const UpdatePlayerResponse = zod.object({
 });
 
 /**
+ * @summary Delete a player
+ */
+export const DeletePlayerParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeletePlayerResponse = zod.object({
+  message: zod.string().optional(),
+});
+
+/**
  * @summary Get medical record for a player
  */
 export const GetPlayerMedicalParams = zod.object({
@@ -232,6 +243,42 @@ export const GetSessionResponse = zod.object({
   playerIds: zod.array(zod.number()),
   description: zod.string(),
   status: zod.enum(["scheduled", "in-progress", "completed"]),
+});
+
+/**
+ * @summary Update a session
+ */
+export const UpdateSessionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateSessionBody = zod.object({
+  type: zod.enum(["match", "training", "recovery"]),
+  date: zod.string(),
+  duration: zod.number(),
+  playerIds: zod.array(zod.number()),
+  description: zod.string(),
+});
+
+export const UpdateSessionResponse = zod.object({
+  id: zod.number(),
+  type: zod.enum(["match", "training", "recovery"]),
+  date: zod.string(),
+  duration: zod.number(),
+  playerIds: zod.array(zod.number()),
+  description: zod.string(),
+  status: zod.enum(["scheduled", "in-progress", "completed"]),
+});
+
+/**
+ * @summary Delete a session
+ */
+export const DeleteSessionParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteSessionResponse = zod.object({
+  message: zod.string().optional(),
 });
 
 /**

@@ -13,7 +13,11 @@
     "overrides": {
       "picomatch@2": "2.3.2",
       "picomatch@4": "4.0.4"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "esbuild"
+    ]
   },
   "devDependencies": {
     "typescript": "~5.9.2",

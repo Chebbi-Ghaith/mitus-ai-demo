@@ -12,6 +12,7 @@ import PlayerProfile from "@/pages/PlayerProfile";
 import Sessions from "@/pages/Sessions";
 import Analysis from "@/pages/Analysis";
 import Login from "@/pages/Login";
+import { CommandPalette } from "@/components/CommandPalette";
 
 const queryClient = new QueryClient();
 
@@ -20,12 +21,12 @@ function Router() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#070E1B]">
+      <div className="min-h-screen w-full flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center animate-pulse">
-            <div className="h-6 w-6 rounded-full bg-primary/50" />
-          </div>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest animate-pulse">Loading Mitus AI...</p>
+          <div className="w-10 h-10 border-3 border-t-primary border-muted rounded-full animate-spin" />
+          <p className="text-xs text-muted-foreground uppercase tracking-widest">
+            Loading Mitus AI...
+          </p>
         </div>
       </div>
     );
@@ -42,9 +43,11 @@ function Router() {
         <Route path="/players" component={Players} />
         <Route path="/players/:id" component={PlayerProfile} />
         <Route path="/sessions" component={Sessions} />
+        <Route path="/analysis/:id" component={Analysis} />
         <Route path="/analysis" component={Analysis} />
         <Route component={NotFound} />
       </Switch>
+      <CommandPalette />
     </AppLayout>
   );
 }

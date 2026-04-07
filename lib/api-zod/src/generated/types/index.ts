@@ -14,6 +14,8 @@ export * from "./createPlayerInput";
 export * from "./createSessionInput";
 export * from "./createSessionInputType";
 export * from "./dashboardStats";
+export * from "./deletePlayer200";
+export * from "./deleteSession200";
 export * from "./errorEnvelope";
 export * from "./exercise";
 export * from "./handleBrowserLoginCallbackParams";

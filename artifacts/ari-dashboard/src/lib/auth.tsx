@@ -53,7 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
+    let data: any = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: "Failed to parse server response" };
+    }
     if (res.ok) { setUser(data); return { ok: true }; }
     return { ok: false, error: data.error ?? "Login failed." };
   }, []);
@@ -63,7 +68,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: "POST",
       body: JSON.stringify({ name, email, password, role }),
     });
-    const data = await res.json();
+    let data: any = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: "Failed to parse server response" };
+    }
     if (res.ok) { setUser(data); return { ok: true }; }
     return { ok: false, error: data.error ?? "Registration failed." };
   }, []);
@@ -73,7 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: "POST",
       body: JSON.stringify({ credential }),
     });
-    const data = await res.json();
+    let data: any = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: "Failed to parse server response" };
+    }
     if (res.ok) { setUser(data); return { ok: true }; }
     return { ok: false, error: data.error ?? "Google login failed." };
   }, []);
